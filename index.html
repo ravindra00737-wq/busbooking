@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root{--brand:#0f766e;--brand-light:#14b8a6;--brand-dark:#0d5c56;--bg:#f0fdfa;--card:#fff;--text:#1e293b;--border:#e2e8f0;--success:#10b981;--danger:#ef4444;}
+:root{--brand:#0f766e;--brand-light:#14b8a6;--brand-dark:#0d5c56;--bg:#f0fdfa;--card:#fff;--text:#1e293b;--border:#e2e8f0;--success:#10b981;--danger:#ef4444;--warning:#f59e0b;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 body.has-bg{background-size:cover;background-attachment:fixed;background-position:center;}
@@ -37,6 +37,7 @@ input:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0
 .btn-primary:hover{background:var(--brand-dark);transform:translateY(-2px);}
 .btn-danger{background:var(--danger);color:#fff;}
 .btn-success{background:var(--success);color:#fff;}
+.btn-warning{background:var(--warning);color:#fff;}
 .btn-outline{background:transparent;border:2px solid var(--brand);color:var(--brand);}
 .btn-full{width:100%;justify-content:center;margin-top:15px;padding:12px;}
 .btn-sm{padding:6px 12px;font-size:0.85rem;}
@@ -46,6 +47,7 @@ input:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0
 .alert{padding:12px 18px;border-radius:8px;margin-bottom:15px;display:none;font-weight:500;}
 .alert-success{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
 .alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.alert-warning{background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
 .login-box{max-width:450px;margin:60px auto;}
 .login-box .card{text-align:center;}
 .file-upload{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;background:#fafafa;}
@@ -106,6 +108,15 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 .legend-box.available{background:#d1fae5;border:2px solid var(--success);}
 .legend-box.booked{background:#fee2e2;border:2px solid var(--danger);}
 .legend-box.selected{background:var(--brand);border:2px solid var(--brand-dark);}
+.status-badge{padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;display:inline-block;}
+.status-booked{background:#d1fae5;color:#065f46;}
+.status-cancelled{background:#fee2e2;color:#991b1b;}
+.status-boarded{background:#dbeafe;color:#1e40af;}
+.status-expired{background:#e5e7eb;color:#374151;}
+.status-pending{background:#fef3c7;color:#92400e;} /* NEW */
+.search-box{margin-bottom:15px;}
+.search-box input{max-width:400px;}
+.user-actions{display:flex;gap:5px;flex-wrap:wrap;}
 @media(max-width:768px){.header-content{flex-direction:column;text-align:center;}.nav-content{flex-direction:column;}.nav-btn{width:100%;}.booking-details,.ticket-details-grid{grid-template-columns:1fr;}.seats-grid{grid-template-columns:repeat(4,1fr);gap:6px;}.seat{padding:10px 5px;}}
 </style>
 </head>
@@ -127,12 +138,13 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <button class="nav-btn hidden" id="nav-seat-selection" onclick="switchTab('seat-selection')">💺 Select Seat</button>
     <button class="nav-btn hidden" id="nav-bookings" onclick="switchTab('bookings')">🎫 My Bookings</button>
     <button class="nav-btn hidden" id="nav-admin-dashboard" onclick="switchTab('admin-dashboard')">📊 Dashboard</button>
+    <button class="nav-btn hidden" id="nav-admin-users" onclick="switchTab('admin-users')">👥 User Management</button>
     <button class="nav-btn hidden" id="nav-admin-calendar" onclick="switchTab('admin-calendar')">📅 Manage Calendar</button>
     <button class="nav-btn hidden" id="nav-admin-seats" onclick="switchTab('admin-seats')">💺 Manage Seats</button>
     <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings')">📋 All Bookings</button>
     <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings')">⚙️ Settings</button>
     <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')">🎨 Branding</button>
-    <button class="nav-btn" id="nav-login" onclick="showLogin()">🔐 Login</button>
+    <button class="nav-btn" id="nav-login" onclick="showLogin()"> Login</button>
     <button class="nav-btn" id="nav-admin-btn" onclick="showAdminLogin()" style="margin-left:auto;">⚙️ Admin</button>
     <div class="user-info hidden" id="user-info">
       <span id="user-name-display">👤 User</span>
@@ -144,6 +156,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 <div class="container">
   <div id="alert-success" class="alert alert-success"></div>
   <div id="alert-error" class="alert alert-error"></div>
+  <div id="alert-warning" class="alert alert-warning"></div>
 
   <!-- LOGIN -->
   <div id="tab-login" class="tab-content active">
@@ -168,26 +181,26 @@ th{background:var(--brand);color:#fff;font-weight:600;}
         <div class="form-group"><label>Employee ID *</label><input type="text" id="signup-empid"></div>
         <div class="form-group"><label>Full Name *</label><input type="text" id="signup-name"></div>
         <div class="form-group">
-  <label>Department *</label>
-  <select id="signup-dept" required>
-    <option value="">Select Department</option>
-    <option value="Executive Office">Executive Office</option>
-    <option value="Human Resources">Human Resources</option>
-    <option value="Front Office">Front Office</option>
-    <option value="F&B Service">F&B Service</option>
-    <option value="Kitchen">Kitchen</option>
-    <option value="Kitchen Stewarding">Kitchen Stewarding</option>
-    <option value="Housekeeping & Laundry">Housekeeping & Laundry</option>
-    <option value="Security">Security</option>
-    <option value="Spa">Spa</option>
-    <option value="Sales & Marketing">Sales & Marketing</option>
-    <option value="Engineering & Landscaping">Engineering & Landscaping</option>
-    <option value="Landscaping">Landscaping</option>
-    <option value="Finance, Purchasing & IT">Finance, Purchasing & IT</option>
-    <option value="Sustainability">Sustainability</option>
-    <option value="Reservations">Reservations</option>
-  </select>
-</div>
+          <label>Department *</label>
+          <select id="signup-dept" required>
+            <option value="">Select Department</option>
+            <option value="Executive Office">Executive Office</option>
+            <option value="Front Office">Front Office</option>
+            <option value="Human Resources">Human Resources</option>
+            <option value="F&B Service">F&B Service</option>
+            <option value="Kitchen">Kitchen</option>
+            <option value="Kitchen Stewarding">Kitchen Stewarding</option>
+            <option value="Housekeeping & Laundry">Housekeeping & Laundry</option>
+            <option value="Security">Security</option>
+            <option value="Spa">Spa</option>
+            <option value="Sales & Marketing">Sales & Marketing</option>
+            <option value="Engineering & Landscaping">Engineering & Landscaping</option>
+            <option value="Landscaping">Landscaping</option>
+            <option value="Finance, Purchasing & IT">Finance, Purchasing & IT</option>
+            <option value="Sustainability">Sustainability</option>
+            <option value="Reservations">Reservations</option>
+          </select>
+        </div>
         <div class="form-group"><label>Mobile *</label><input type="tel" id="signup-mobile"></div>
         <div class="form-group"><label>Password * (min 6 chars)</label><input type="password" id="signup-password"></div>
         <button class="btn btn-primary btn-full" onclick="employeeSignup()">Create Account</button>
@@ -214,13 +227,9 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <div class="card">
       <h2>💺 Select Your Seat</h2>
       <p style="color:#64748b;margin-bottom:15px;">Selected Date: <strong id="selected-date-display"></strong></p>
-      
       <div class="seat-selection-container">
         <div class="bus-layout">
-          <div class="bus-front">
-            <h3> Coaster Bus</h3>
-            <p>Front (Driver)</p>
-          </div>
+          <div class="bus-front"><h3>🚌 Coaster Bus</h3><p>Front (Driver)</p></div>
           <div class="seats-grid" id="seats-grid"></div>
           <div class="legend">
             <div class="legend-item"><div class="legend-box available"></div><span>Available</span></div>
@@ -229,7 +238,6 @@ th{background:var(--brand);color:#fff;font-weight:600;}
           </div>
         </div>
       </div>
-
       <div id="seat-booking-summary" style="background:#f8fafc;padding:20px;border-radius:8px;margin-top:20px;display:none;">
         <h3 style="margin-bottom:15px;">Booking Summary</h3>
         <div class="booking-details">
@@ -259,11 +267,31 @@ th{background:var(--brand);color:#fff;font-weight:600;}
           <div style="font-size:2rem;font-weight:bold;" id="stat-bookings">0</div><div>Total Bookings</div>
         </div>
         <div style="background:linear-gradient(135deg,var(--success),#34d399);color:#fff;padding:20px;border-radius:10px;text-align:center;">
+          <div style="font-size:2rem;font-weight:bold;" id="stat-boarded">0</div><div>Boarded</div>
+        </div>
+        <div style="background:linear-gradient(135deg,var(--warning),var(--gold-light));color:#fff;padding:20px;border-radius:10px;text-align:center;">
           <div style="font-size:2rem;font-weight:bold;" id="stat-trips">0</div><div>Scheduled Trips</div>
         </div>
         <div style="background:linear-gradient(135deg,var(--danger),#f87171);color:#fff;padding:20px;border-radius:10px;text-align:center;">
           <div style="font-size:2rem;font-weight:bold;" id="stat-users">0</div><div>Registered Users</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN USER MANAGEMENT -->
+  <div id="tab-admin-users" class="tab-content">
+    <div class="card">
+      <h2>👥 User Management</h2>
+      <div class="search-box">
+        <input type="text" id="user-search" placeholder="🔍 Search by Employee ID, Name, or Mobile..." oninput="renderUserManagement()">
+      </div>
+      <button class="btn btn-primary" onclick="showAddUserModal()" style="margin-bottom:15px;">➕ Add New Employee</button>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Mobile</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -288,10 +316,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <div class="card">
       <h2>💺 Manage Seat Availability</h2>
       <p style="color:#64748b;margin-bottom:15px;">Mark seats as available or unavailable for specific dates.</p>
-      <div class="form-group">
-        <label>Select Trip Date</label>
-        <input type="date" id="seat-date" onchange="loadSeatManagement()">
-      </div>
+      <div class="form-group"><label>Select Trip Date</label><input type="date" id="seat-date" onchange="loadSeatManagement()"></div>
       <div class="seat-management" id="seat-management-container">
         <p style="text-align:center;color:#94a3b8;padding:20px;">Select a date above to manage seats</p>
       </div>
@@ -302,7 +327,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- ADMIN BOOKINGS -->
   <div id="tab-admin-bookings" class="tab-content">
     <div class="card">
-      <h2>📋 All Bookings</h2>
+      <h2> All Bookings</h2>
       <div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="showBookOnBehalfModal()">➕ Book on Behalf</button>
       </div>
@@ -318,10 +343,10 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- ADMIN SETTINGS -->
   <div id="tab-admin-settings" class="tab-content">
     <div class="card">
-      <h2>⚙️ Booking Settings</h2>
+      <h2>️ Booking Settings</h2>
       <div class="form-group"><label>Booking Opens At</label><input type="time" id="setting-open-time" value="10:00"></div>
       <div class="form-group"><label>Booking Closes At</label><input type="time" id="setting-close-time" value="18:30"></div>
-      <button class="btn btn-primary" onclick="saveSettings()"> Save Settings</button>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
     </div>
   </div>
 
@@ -334,7 +359,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
       <div class="form-group">
         <label>Hotel Logo</label>
         <div class="file-upload" id="logo-upload">
-          <p style="font-size:2rem;"></p>
+          <p style="font-size:2rem;">🏨</p>
           <p><strong>Click to upload logo</strong></p>
           <input type="file" id="brand-logo-file" accept="image/*">
         </div>
@@ -355,22 +380,48 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   </div>
 </div>
 
+<!-- Add/Edit User Modal -->
+<div id="user-modal" class="modal">
+  <div class="modal-content">
+    <h2 style="color:var(--brand);margin-bottom:20px;" id="user-modal-title"> Add New Employee</h2>
+    <input type="hidden" id="edit-user-id">
+    <div class="form-group"><label>Employee ID *</label><input type="text" id="modal-empid"></div>
+    <div class="form-group"><label>Full Name *</label><input type="text" id="modal-name"></div>
+    <div class="form-group">
+      <label>Department *</label>
+      <select id="modal-dept" required>
+        <option value="">Select Department</option>
+        <option value="Executive Office">Executive Office</option>
+        <option value="Front Office">Front Office</option>
+        <option value="Human Resources">Human Resources</option>
+        <option value="F&B Service">F&B Service</option>
+        <option value="Kitchen">Kitchen</option>
+        <option value="Kitchen Stewarding">Kitchen Stewarding</option>
+        <option value="Housekeeping & Laundry">Housekeeping & Laundry</option>
+        <option value="Security">Security</option>
+        <option value="Spa">Spa</option>
+        <option value="Sales & Marketing">Sales & Marketing</option>
+        <option value="Engineering & Landscaping">Engineering & Landscaping</option>
+        <option value="Landscaping">Landscaping</option>
+        <option value="Finance, Purchasing & IT">Finance, Purchasing & IT</option>
+        <option value="Sustainability">Sustainability</option>
+        <option value="Reservations">Reservations</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Mobile *</label><input type="tel" id="modal-mobile"></div>
+    <div class="form-group"><label>Password * (min 6 chars)</label><input type="password" id="modal-password"></div>
+    <button class="btn btn-success btn-full" onclick="saveUser()"> Save Employee</button>
+    <button class="btn btn-outline btn-full" onclick="closeModal('user-modal')" style="margin-top:10px;">Cancel</button>
+  </div>
+</div>
+
 <!-- Book on Behalf Modal -->
 <div id="book-on-behalf-modal" class="modal">
   <div class="modal-content">
     <h2 style="color:var(--brand);margin-bottom:20px;">➕ Book on Behalf of Employee</h2>
-    <div class="form-group">
-      <label>Select Employee</label>
-      <select id="behalf-employee"></select>
-    </div>
-    <div class="form-group">
-      <label>Select Trip Date</label>
-      <select id="behalf-trip"></select>
-    </div>
-    <div class="form-group">
-      <label>Select Seat (1-22)</label>
-      <select id="behalf-seat"></select>
-    </div>
+    <div class="form-group"><label>Select Employee</label><select id="behalf-employee"></select></div>
+    <div class="form-group"><label>Select Trip Date</label><select id="behalf-trip"></select></div>
+    <div class="form-group"><label>Select Seat (1-22)</label><select id="behalf-seat"></select></div>
     <button class="btn btn-success btn-full" onclick="confirmBookOnBehalf()">✅ Confirm Booking</button>
     <button class="btn btn-outline btn-full" onclick="closeModal('book-on-behalf-modal')" style="margin-top:10px;">Cancel</button>
   </div>
@@ -381,14 +432,14 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <div class="modal-content">
     <h2 style="color:var(--brand);margin-bottom:15px;">🎫 Bus Ticket</h2>
     <div id="ticket-content"></div>
-    <button class="btn btn-primary btn-full" onclick="downloadTicketPDF()"> Download PDF</button>
+    <button class="btn btn-primary btn-full" onclick="downloadTicketPDF()">📥 Download PDF</button>
     <button class="btn btn-outline btn-full" onclick="closeModal('ticket-modal')" style="margin-top:10px;">Close</button>
   </div>
 </div>
 
 <script>
 // ============================================================
-//  REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
+// 🔴 REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyAgU15_P_cmqYW0jePaaT5RqWAyOpAdYYk",
@@ -481,7 +532,10 @@ function loadAllData() {
     const data = snap.val();
     bookings = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
     if(currentUser) renderMyBookings();
-    if(isAdmin) loadAdminBookings();
+    if(isAdmin) {
+      loadAdminBookings();
+      renderUserManagement();
+    }
     updateStats();
   });
   
@@ -489,6 +543,7 @@ function loadAllData() {
     const data = snap.val();
     users = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
     updateStats();
+    if(isAdmin) renderUserManagement();
   });
   
   db.ref('bus/settings').on('value', snap => {
@@ -546,6 +601,10 @@ function formatDateDisplay(dateStr) {
   return `${day}/${month}/${year}`;
 }
 
+function generateSecureToken() {
+  return 'TKN-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+}
+
 function switchTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(t => t.classList.remove('active'));
@@ -555,6 +614,7 @@ function switchTab(tabName) {
   if(tabName === 'seat-selection' && selectedDateForBooking) renderSeatSelection();
   if(tabName === 'bookings' && currentUser) renderMyBookings();
   if(tabName === 'admin-dashboard') updateStats();
+  if(tabName === 'admin-users') renderUserManagement();
   if(tabName === 'admin-calendar') renderAdminTrips();
   if(tabName === 'admin-seats') loadSeatManagement();
   if(tabName === 'admin-bookings') loadAdminBookings();
@@ -575,12 +635,12 @@ function showSignup() {
 function updateNav() {
   const isLoggedIn = currentUser !== null;
   
-  ['nav-calendar','nav-seat-selection','nav-bookings','nav-admin-dashboard','nav-admin-calendar','nav-admin-seats','nav-admin-bookings','nav-admin-settings','nav-admin-branding','nav-login','user-info'].forEach(id => {
+  ['nav-calendar','nav-seat-selection','nav-bookings','nav-admin-dashboard','nav-admin-users','nav-admin-calendar','nav-admin-seats','nav-admin-bookings','nav-admin-settings','nav-admin-branding','nav-login','user-info'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
   
   if(isAdmin) {
-    ['nav-admin-dashboard','nav-admin-calendar','nav-admin-seats','nav-admin-bookings','nav-admin-settings','nav-admin-branding'].forEach(id => {
+    ['nav-admin-dashboard','nav-admin-users','nav-admin-calendar','nav-admin-seats','nav-admin-bookings','nav-admin-settings','nav-admin-branding'].forEach(id => {
       document.getElementById(id).classList.remove('hidden');
     });
     document.getElementById('nav-login').classList.remove('hidden');
@@ -597,6 +657,7 @@ function updateNav() {
   }
 }
 
+// ============ UPDATED LOGIN WITH APPROVAL CHECK ============
 function employeeLogin() {
   const empId = document.getElementById('login-empid').value.trim();
   const password = document.getElementById('login-password').value;
@@ -608,12 +669,26 @@ function employeeLogin() {
   
   db.ref('bus/users').orderByChild('employeeId').equalTo(empId).once('value', snap => {
     let found = null;
+    let accountStatus = '';
+    
     snap.forEach(child => {
       const data = child.val();
       if(data.password === btoa(password)) {
-        found = {id: child.key, ...data};
+        accountStatus = data.status;
+        if(data.status === 'active') {
+          found = {id: child.key, ...data};
+        }
       }
     });
+    
+    if(accountStatus === 'pending') {
+      showAlert('Your account is pending admin approval. Please wait.', 'warning');
+      return;
+    }
+    if(accountStatus === 'inactive') {
+      showAlert('Your account has been deactivated. Contact admin.', 'error');
+      return;
+    }
     
     if(found) {
       currentUser = found;
@@ -627,6 +702,7 @@ function employeeLogin() {
   });
 }
 
+// ============ UPDATED SIGNUP WITH PENDING STATUS ============
 function employeeSignup() {
   const empId = document.getElementById('signup-empid').value.trim();
   const name = document.getElementById('signup-name').value.trim();
@@ -649,11 +725,12 @@ function employeeSignup() {
     department: dept,
     mobile: mobile,
     password: btoa(password),
+    status: 'pending', // Changed from 'active' to 'pending'
     createdAt: Date.now()
   };
   
   db.ref('bus/users').push(newUser).then(() => {
-    showAlert('Account created! Please login.', 'success');
+    showAlert('Account created! Awaiting admin approval.', 'warning');
     showLogin();
   }).catch(err => {
     showAlert('Error: ' + err.message, 'error');
@@ -707,6 +784,165 @@ function saveBranding() {
   });
 }
 
+// ============ UPDATED USER MANAGEMENT WITH APPROVE BUTTON ============
+function renderUserManagement() {
+  const tbody = document.getElementById('users-tbody');
+  if(!tbody) return;
+  
+  const searchTerm = (document.getElementById('user-search')?.value || '').toLowerCase();
+  
+  let filteredUsers = users.filter(u => {
+    const searchStr = `${u.employeeId} ${u.name} ${u.mobile}`.toLowerCase();
+    return searchStr.includes(searchTerm);
+  });
+  
+  if(filteredUsers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No users found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = filteredUsers.map(u => {
+    let statusClass = 'status-booked';
+    let statusText = u.status || 'active';
+    
+    if(u.status === 'pending') {
+      statusClass = 'status-pending';
+    } else if(u.status === 'inactive') {
+      statusClass = 'status-cancelled';
+    }
+    
+    return `
+    <tr>
+      <td><strong>${u.employeeId}</strong></td>
+      <td>${u.name}</td>
+      <td>${u.department}</td>
+      <td>${u.mobile}</td>
+      <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+      <td class="user-actions">
+        ${u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')">✅ Approve</button>` : ''}
+        <button class="btn btn-outline btn-sm" onclick="editUser('${u.id}')">✏️ Edit</button>
+        <button class="btn btn-warning btn-sm" onclick="toggleUserStatus('${u.id}')">${u.status === 'active' ? '🚫 Deactivate' : '✅ Activate'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">🗑️ Delete</button>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+// ============ NEW APPROVE FUNCTION ============
+function approveUser(userId) {
+  if(!confirm('Approve this employee? They will be able to log in immediately.')) return;
+  
+  db.ref('bus/users/' + userId).update({status: 'active'}).then(() => {
+    showAlert('Employee approved successfully!', 'success');
+  }).catch(err => {
+    showAlert('Error: ' + err.message, 'error');
+  });
+}
+
+function showAddUserModal() {
+  document.getElementById('user-modal-title').innerText = ' Add New Employee';
+  document.getElementById('edit-user-id').value = '';
+  document.getElementById('modal-empid').value = '';
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-dept').value = '';
+  document.getElementById('modal-mobile').value = '';
+  document.getElementById('modal-password').value = '';
+  document.getElementById('user-modal').classList.add('active');
+}
+
+function editUser(userId) {
+  const user = users.find(u => u.id === userId);
+  if(!user) return;
+  
+  document.getElementById('user-modal-title').innerText = '✏️ Edit Employee';
+  document.getElementById('edit-user-id').value = userId;
+  document.getElementById('modal-empid').value = user.employeeId;
+  document.getElementById('modal-name').value = user.name;
+  document.getElementById('modal-dept').value = user.department;
+  document.getElementById('modal-mobile').value = user.mobile;
+  document.getElementById('modal-password').value = '';
+  document.getElementById('user-modal').classList.add('active');
+}
+
+function saveUser() {
+  const userId = document.getElementById('edit-user-id').value;
+  const empId = document.getElementById('modal-empid').value.trim();
+  const name = document.getElementById('modal-name').value.trim();
+  const dept = document.getElementById('modal-dept').value;
+  const mobile = document.getElementById('modal-mobile').value.trim();
+  const password = document.getElementById('modal-password').value;
+  
+  if(!empId || !name || !dept || !mobile) {
+    showAlert('Please fill all required fields', 'error');
+    return;
+  }
+  
+  const userData = {
+    employeeId: empId,
+    name: name,
+    department: dept,
+    mobile: mobile,
+    updatedAt: Date.now()
+  };
+  
+  if(password && password.length >= 6) {
+    userData.password = btoa(password);
+  }
+  
+  if(userId) {
+    db.ref('bus/users/' + userId).update(userData).then(() => {
+      showAlert('Employee updated successfully!', 'success');
+      closeModal('user-modal');
+    }).catch(err => {
+      showAlert('Error: ' + err.message, 'error');
+    });
+  } else {
+    if(!password || password.length < 6) {
+      showAlert('Password is required for new employees (min 6 chars)', 'error');
+      return;
+    }
+    userData.password = btoa(password);
+    userData.status = 'pending'; // New users added by admin also need approval (or change to 'active' if you prefer)
+    userData.createdAt = Date.now();
+    
+    db.ref('bus/users').push(userData).then(() => {
+      showAlert('Employee added successfully! (Status: Pending)', 'success');
+      closeModal('user-modal');
+    }).catch(err => {
+      showAlert('Error: ' + err.message, 'error');
+    });
+  }
+}
+
+function toggleUserStatus(userId) {
+  const user = users.find(u => u.id === userId);
+  if(!user) return;
+  
+  const newStatus = user.status === 'active' ? 'inactive' : 'active';
+  const action = newStatus === 'active' ? 'activate' : 'deactivate';
+  
+  if(!confirm(`Are you sure you want to ${action} ${user.name}?`)) return;
+  
+  db.ref('bus/users/' + userId).update({status: newStatus}).then(() => {
+    showAlert(`Employee ${action}d successfully!`, 'success');
+  }).catch(err => {
+    showAlert('Error: ' + err.message, 'error');
+  });
+}
+
+function deleteUser(userId) {
+  const user = users.find(u => u.id === userId);
+  if(!user) return;
+  
+  if(!confirm(`Are you sure you want to permanently delete ${user.name}? This cannot be undone.`)) return;
+  
+  db.ref('bus/users/' + userId).remove().then(() => {
+    showAlert('Employee deleted permanently', 'success');
+  }).catch(err => {
+    showAlert('Error: ' + err.message, 'error');
+  });
+}
+
 function renderCalendar() {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -751,7 +987,7 @@ function renderCalendar() {
     
     if(trip) {
       div.classList.add('has-bus');
-      const bookingCount = bookings.filter(b => b.tripDate === dateStr && b.status === 'confirmed').length;
+      const bookingCount = bookings.filter(b => b.tripDate === dateStr && b.status === 'booked').length;
       const status = bookingCount >= 22 ? 'full' : 'available';
       div.innerHTML = `
         <div class="day-name">${dayNames[dateObj.getDay()]}</div>
@@ -806,7 +1042,7 @@ function selectDateForBooking(dateStr) {
   const existingBooking = bookings.find(b => 
     b.userId === currentUser.id && 
     b.tripDate === dateStr && 
-    b.status === 'confirmed'
+    (b.status === 'booked' || b.status === 'boarded')
   );
   
   if(existingBooking) {
@@ -829,7 +1065,7 @@ function renderSeatSelection() {
   const grid = document.getElementById('seats-grid');
   grid.innerHTML = '';
   
-  const tripBookings = bookings.filter(b => b.tripDate === selectedDateForBooking && b.status === 'confirmed');
+  const tripBookings = bookings.filter(b => b.tripDate === selectedDateForBooking && (b.status === 'booked' || b.status === 'boarded'));
   const dayAvailability = seatAvailability[selectedDateForBooking] || {};
   
   for(let row = 0; row < 6; row++) {
@@ -890,6 +1126,8 @@ function confirmBookingWithSeat() {
     return;
   }
   
+  const secureToken = generateSecureToken();
+  
   const booking = {
     userId: currentUser.id,
     employeeId: currentUser.employeeId,
@@ -900,7 +1138,8 @@ function confirmBookingWithSeat() {
     tripTime: trip.time,
     seatNumber: selectedSeatForBooking,
     bookedAt: Date.now(),
-    status: 'confirmed'
+    status: 'booked',
+    secureToken: secureToken
   };
   
   db.ref('bus/bookings').push(booking).then(() => {
@@ -914,9 +1153,10 @@ function confirmBookingWithSeat() {
 }
 
 function updateStats() {
-  document.getElementById('stat-bookings').innerText = bookings.filter(b => b.status === 'confirmed').length;
+  document.getElementById('stat-bookings').innerText = bookings.filter(b => b.status === 'booked').length;
+  document.getElementById('stat-boarded').innerText = bookings.filter(b => b.status === 'boarded').length;
   document.getElementById('stat-trips').innerText = trips.length;
-  document.getElementById('stat-users').innerText = users.length;
+  document.getElementById('stat-users').innerText = users.filter(u => u.status !== 'inactive').length;
 }
 
 function addTrip() {
@@ -954,7 +1194,7 @@ function renderAdminTrips() {
   }
   
   container.innerHTML = trips.sort((a,b) => a.date.localeCompare(b.date)).map(t => {
-    const count = bookings.filter(b => b.tripDate === t.date && b.status === 'confirmed').length;
+    const count = bookings.filter(b => b.tripDate === t.date && (b.status === 'booked' || b.status === 'boarded')).length;
     return `
       <div class="trip-item">
         <div>
@@ -1040,21 +1280,23 @@ function loadAdminBookings() {
     return;
   }
   
-  tbody.innerHTML = bookings.map(b => `
+  tbody.innerHTML = bookings.map(b => {
+    const statusClass = `status-${b.status}`;
+    return `
     <tr>
       <td><strong>${b.name || 'N/A'}</strong><br><small>${b.employeeId || 'N/A'}</small></td>
       <td>${b.department || 'N/A'}</td>
       <td>${formatDateDisplay(b.tripDate)}</td>
       <td>${b.seatNumber || 'N/A'}</td>
       <td>${b.mobile || 'N/A'}</td>
-      <td><span style="padding:4px 10px;background:${b.status === 'confirmed' ? '#d1fae5' : '#fee2e2'};color:${b.status === 'confirmed' ? '#065f46' : '#991b1b'};border-radius:12px;font-size:0.85rem;">${b.status}</span></td>
+      <td><span class="status-badge ${statusClass}">${b.status}</span></td>
       <td>
         <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">🎫</button>
-        ${b.status === 'confirmed' ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking('${b.id}')">Cancel</button>` : ''}
+        ${b.status === 'booked' ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking('${b.id}')">Cancel</button>` : ''}
         <button class="btn btn-danger btn-sm" onclick="deleteBooking('${b.id}')" style="margin-left:5px;">🗑️</button>
       </td>
     </tr>
-  `).join('');
+  `}).join('');
 }
 
 function cancelBooking(bookingId) {
@@ -1077,7 +1319,7 @@ function deleteBooking(bookingId) {
 
 function showBookOnBehalfModal() {
   const empSelect = document.getElementById('behalf-employee');
-  empSelect.innerHTML = users.map(u => `<option value="${u.id}">${u.name} (${u.employeeId})</option>`).join('');
+  empSelect.innerHTML = users.filter(u => u.status !== 'inactive').map(u => `<option value="${u.id}">${u.name} (${u.employeeId})</option>`).join('');
   
   const tripSelect = document.getElementById('behalf-trip');
   tripSelect.innerHTML = trips.map(t => `<option value="${t.date}">${formatDateDisplay(t.date)} - ${t.time}</option>`).join('');
@@ -1112,13 +1354,15 @@ function confirmBookOnBehalf() {
   const existingBooking = bookings.find(b => 
     b.userId === userId && 
     b.tripDate === tripDate && 
-    b.status === 'confirmed'
+    (b.status === 'booked' || b.status === 'boarded')
   );
   
   if(existingBooking) {
     showAlert('Employee already has a booking for this date', 'error');
     return;
   }
+  
+  const secureToken = generateSecureToken();
   
   const booking = {
     userId: userId,
@@ -1130,7 +1374,8 @@ function confirmBookOnBehalf() {
     tripTime: trip.time,
     seatNumber: seatNumber,
     bookedAt: Date.now(),
-    status: 'confirmed',
+    status: 'booked',
+    secureToken: secureToken,
     bookedBy: 'admin'
   };
   
@@ -1151,11 +1396,18 @@ function viewTicket(bookingId) {
   
   currentTicketData = booking;
   
+  const isCancelled = booking.status === 'cancelled';
+  const isBoarded = booking.status === 'boarded';
+  const isExpired = booking.status === 'expired';
+  
   const html = `
     <div class="ticket-preview">
       <div class="ticket-header">
         <h2 style="color:var(--brand);margin:0;">${document.getElementById('app-hotel-name').innerText}</h2>
         <p style="color:#64748b;margin:5px 0;">Bus Ticket - Umluj Shopping Trip</p>
+        <div style="margin-top:10px;">
+          <span class="status-badge status-${booking.status}">${booking.status.toUpperCase()}</span>
+        </div>
       </div>
       <div class="ticket-details-grid">
         <div class="ticket-detail-box"><label>Passenger Name</label><strong>${booking.name}</strong></div>
@@ -1167,39 +1419,54 @@ function viewTicket(bookingId) {
         <div class="ticket-detail-box"><label>Seat Number</label><strong>${booking.seatNumber}</strong></div>
         <div class="ticket-detail-box"><label>Booking Time</label><strong>${new Date(booking.bookedAt).toLocaleString()}</strong></div>
       </div>
+      ${!isCancelled && !isExpired ? `
       <div class="ticket-qr">
         <div id="qrcode-container"></div>
         <p style="margin-top:10px;color:#64748b;font-size:0.85rem;">Scan QR code for verification</p>
+        ${isBoarded ? '<p style="margin-top:5px;color:var(--success);font-weight:bold;">✅ Already Boarded</p>' : ''}
       </div>
+      ` : '<p style="text-align:center;color:var(--danger);font-weight:bold;padding:20px;">❌ This ticket is no longer valid</p>'}
     </div>
   `;
   
   document.getElementById('ticket-content').innerHTML = html;
   document.getElementById('ticket-modal').classList.add('active');
   
-  // Generate QR code after modal is shown
-  setTimeout(() => {
-    const qrContainer = document.getElementById('qrcode-container');
-    if(qrContainer && typeof QRCode !== 'undefined') {
-      qrContainer.innerHTML = '';
-      const qrData = `BUS_TICKET|${booking.employeeId}|${booking.name}|Seat:${booking.seatNumber}|${booking.tripDate}|${booking.tripTime}`;
-      new QRCode(qrContainer, {
-        text: qrData,
-        width: 180,
-        height: 180,
-        colorDark: "#0f766e",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    } else {
-      qrContainer.innerHTML = '<p style="color:red;">QR Code library not loaded</p>';
-    }
-  }, 200);
+  if(!isCancelled && !isExpired) {
+    setTimeout(() => {
+      const qrContainer = document.getElementById('qrcode-container');
+      if(qrContainer && typeof QRCode !== 'undefined') {
+        qrContainer.innerHTML = '';
+        const qrData = JSON.stringify({
+          token: booking.secureToken,
+          bookingId: booking.id,
+          employeeId: booking.employeeId,
+          name: booking.name,
+          seat: booking.seatNumber,
+          date: booking.tripDate,
+          time: booking.tripTime
+        });
+        new QRCode(qrContainer, {
+          text: qrData,
+          width: 180,
+          height: 180,
+          colorDark: "#0f766e",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      }
+    }, 200);
+  }
 }
 
 function downloadTicketPDF() {
   if(!currentTicketData) {
     showAlert('No ticket data', 'error');
+    return;
+  }
+  
+  if(currentTicketData.status === 'cancelled' || currentTicketData.status === 'expired') {
+    showAlert('Cannot download ticket - booking is ' + currentTicketData.status, 'error');
     return;
   }
   
@@ -1229,7 +1496,8 @@ function downloadTicketPDF() {
       ['Departure Time:', b.tripTime || '10:00'],
       ['Seat Number:', b.seatNumber.toString()],
       ['Booking Time:', new Date(b.bookedAt).toLocaleString()],
-      ['Status:', b.status.toUpperCase()]
+      ['Status:', b.status.toUpperCase()],
+      ['Secure Token:', b.secureToken || 'N/A']
     ];
     
     details.forEach(([label, value]) => {
@@ -1240,10 +1508,20 @@ function downloadTicketPDF() {
       y += 10;
     });
     
+    const qrContainer = document.getElementById('qrcode-container');
+    if(qrContainer) {
+      const canvas = qrContainer.querySelector('canvas');
+      if(canvas) {
+        const qrImgData = canvas.toDataURL('image/png');
+        doc.addImage(qrImgData, 'PNG', 75, y + 10, 60, 60);
+        y += 80;
+      }
+    }
+    
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
     doc.text('Please arrive 15 minutes before departure time', 105, 270, {align: 'center'});
-    doc.text('Present this ticket to the driver', 105, 277, {align: 'center'});
+    doc.text('Present this ticket to the driver for verification', 105, 277, {align: 'center'});
     
     doc.save(`Ticket_${b.employeeId}_${b.tripDate}.pdf`);
     showAlert('Ticket downloaded successfully!', 'success');
@@ -1263,22 +1541,27 @@ function renderMyBookings() {
     return;
   }
   
-  container.innerHTML = myBookings.map(b => `
+  container.innerHTML = myBookings.map(b => {
+    const statusClass = `status-${b.status}`;
+    const canDownload = b.status === 'booked' || b.status === 'boarded';
+    const canCancel = b.status === 'booked';
+    
+    return `
     <div class="booking-card">
-      <h3>🎫 Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'}</h3>
+      <h3> Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'} <span class="status-badge ${statusClass}" style="float:right;">${b.status}</span></h3>
       <div class="booking-details">
         <div class="booking-detail"><label>Travel Date</label><strong>${formatDateDisplay(b.tripDate)}</strong></div>
         <div class="booking-detail"><label>Departure Time</label><strong>${b.tripTime || '10:00'}</strong></div>
         <div class="booking-detail"><label>Seat Number</label><strong>${b.seatNumber || 'N/A'}</strong></div>
-        <div class="booking-detail"><label>Status</label><strong style="color:${b.status === 'confirmed' ? 'var(--success)' : 'var(--danger)'};">${b.status === 'confirmed' ? '✅ Confirmed' : '❌ Cancelled'}</strong></div>
+        <div class="booking-detail"><label>Booking Time</label><strong>${new Date(b.bookedAt).toLocaleString()}</strong></div>
       </div>
       <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')"> View/Download Ticket</button>
-        ${b.status === 'confirmed' ? `<button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.id}')">❌ Cancel</button>` : ''}
-        <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">️ Delete</button>
+        ${canDownload ? `<button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">🎫 View/Download Ticket</button>` : ''}
+        ${canCancel ? `<button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.id}')">❌ Cancel</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">🗑️ Delete</button>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 function cancelMyBooking(bookingId) {
