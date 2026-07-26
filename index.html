@@ -6,7 +6,7 @@
 <title>Bus Booking System - Umluj Shopping Trip</title>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{--brand:#0f766e;--brand-light:#14b8a6;--brand-dark:#0d5c56;--bg:#f0fdfa;--card:#fff;--text:#1e293b;--border:#e2e8f0;--success:#10b981;--danger:#ef4444;}
@@ -86,6 +86,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 .ticket-detail-box label{font-size:0.8rem;color:#64748b;margin-bottom:3px;display:block;}
 .ticket-detail-box strong{font-size:1.1rem;color:var(--text);}
 .ticket-qr{text-align:center;padding:20px;background:#f8fafc;border-radius:8px;}
+.ticket-qr #qrcode-container{display:inline-block;background:#fff;padding:15px;border-radius:8px;}
 .seat-selection-container{background:#f8fafc;padding:30px;border-radius:12px;margin:20px 0;}
 .bus-layout{max-width:500px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
 .bus-front{text-align:center;padding:15px;background:#1e293b;color:#fff;border-radius:8px;margin-bottom:25px;}
@@ -105,7 +106,6 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 .legend-box.available{background:#d1fae5;border:2px solid var(--success);}
 .legend-box.booked{background:#fee2e2;border:2px solid var(--danger);}
 .legend-box.selected{background:var(--brand);border:2px solid var(--brand-dark);}
-.debug-panel{background:#1e293b;color:#10b981;padding:15px;border-radius:8px;margin-bottom:20px;font-family:monospace;font-size:0.85rem;max-height:200px;overflow-y:auto;}
 @media(max-width:768px){.header-content{flex-direction:column;text-align:center;}.nav-content{flex-direction:column;}.nav-btn{width:100%;}.booking-details,.ticket-details-grid{grid-template-columns:1fr;}.seats-grid{grid-template-columns:repeat(4,1fr);gap:6px;}.seat{padding:10px 5px;}}
 </style>
 </head>
@@ -130,23 +130,18 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <button class="nav-btn hidden" id="nav-admin-calendar" onclick="switchTab('admin-calendar')">📅 Manage Calendar</button>
     <button class="nav-btn hidden" id="nav-admin-seats" onclick="switchTab('admin-seats')">💺 Manage Seats</button>
     <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings')">📋 All Bookings</button>
-    <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings')">️ Settings</button>
+    <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings')">⚙️ Settings</button>
     <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')">🎨 Branding</button>
-    <button class="nav-btn" id="nav-login" onclick="showLogin()"> Login</button>
-    <button class="nav-btn" id="nav-admin-btn" onclick="showAdminLogin()" style="margin-left:auto;">️ Admin</button>
+    <button class="nav-btn" id="nav-login" onclick="showLogin()">🔐 Login</button>
+    <button class="nav-btn" id="nav-admin-btn" onclick="showAdminLogin()" style="margin-left:auto;">⚙️ Admin</button>
     <div class="user-info hidden" id="user-info">
-      <span id="user-name-display"> User</span>
+      <span id="user-name-display">👤 User</span>
       <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
     </div>
   </div>
 </div>
 
 <div class="container">
-  <div class="debug-panel" id="debug-panel">
-    <strong>🔍 Debug Log:</strong><br>
-    <span id="debug-log">App starting...</span>
-  </div>
-
   <div id="alert-success" class="alert alert-success"></div>
   <div id="alert-error" class="alert alert-error"></div>
 
@@ -154,7 +149,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <div id="tab-login" class="tab-content active">
     <div class="login-box">
       <div class="card">
-        <h2> Employee Login</h2>
+        <h2>🔐 Employee Login</h2>
         <div class="form-group"><label>Employee ID</label><input type="text" id="login-empid" placeholder="Enter Employee ID"></div>
         <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Enter Password"></div>
         <button class="btn btn-primary btn-full" onclick="employeeLogin()">Login</button>
@@ -169,7 +164,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <div id="tab-signup" class="tab-content">
     <div class="login-box">
       <div class="card">
-        <h2> Create Account</h2>
+        <h2>📝 Create Account</h2>
         <div class="form-group"><label>Employee ID *</label><input type="text" id="signup-empid"></div>
         <div class="form-group"><label>Full Name *</label><input type="text" id="signup-name"></div>
         <div class="form-group"><label>Department *</label><input type="text" id="signup-dept"></div>
@@ -184,7 +179,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- CALENDAR -->
   <div id="tab-calendar" class="tab-content">
     <div class="card">
-      <h2>📅 Select Travel Date</h2>
+      <h2> Select Travel Date</h2>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <button class="btn btn-outline" onclick="changeMonth(-1)">← Previous</button>
         <h3 id="calendar-month-year"></h3>
@@ -203,7 +198,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
       <div class="seat-selection-container">
         <div class="bus-layout">
           <div class="bus-front">
-            <h3>🚌 Coaster Bus</h3>
+            <h3> Coaster Bus</h3>
             <p>Front (Driver)</p>
           </div>
           <div class="seats-grid" id="seats-grid"></div>
@@ -230,7 +225,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- MY BOOKINGS -->
   <div id="tab-bookings" class="tab-content">
     <div class="card">
-      <h2> My Bookings</h2>
+      <h2>🎫 My Bookings</h2>
       <div id="my-bookings-list"></div>
     </div>
   </div>
@@ -238,7 +233,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- ADMIN DASHBOARD -->
   <div id="tab-admin-dashboard" class="tab-content">
     <div class="card">
-      <h2>📊 Dashboard Overview</h2>
+      <h2> Dashboard Overview</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
         <div style="background:linear-gradient(135deg,var(--brand),var(--brand-light));color:#fff;padding:20px;border-radius:10px;text-align:center;">
           <div style="font-size:2rem;font-weight:bold;" id="stat-bookings">0</div><div>Total Bookings</div>
@@ -289,7 +284,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <div class="card">
       <h2>📋 All Bookings</h2>
       <div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="showBookOnBehalfModal()"> Book on Behalf</button>
+        <button class="btn btn-primary" onclick="showBookOnBehalfModal()">➕ Book on Behalf</button>
       </div>
       <div style="overflow-x:auto;">
         <table>
@@ -306,7 +301,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
       <h2>⚙️ Booking Settings</h2>
       <div class="form-group"><label>Booking Opens At</label><input type="time" id="setting-open-time" value="10:00"></div>
       <div class="form-group"><label>Booking Closes At</label><input type="time" id="setting-close-time" value="18:30"></div>
-      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+      <button class="btn btn-primary" onclick="saveSettings()"> Save Settings</button>
     </div>
   </div>
 
@@ -319,7 +314,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
       <div class="form-group">
         <label>Hotel Logo</label>
         <div class="file-upload" id="logo-upload">
-          <p style="font-size:2rem;">🏨</p>
+          <p style="font-size:2rem;"></p>
           <p><strong>Click to upload logo</strong></p>
           <input type="file" id="brand-logo-file" accept="image/*">
         </div>
@@ -366,14 +361,14 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <div class="modal-content">
     <h2 style="color:var(--brand);margin-bottom:15px;">🎫 Bus Ticket</h2>
     <div id="ticket-content"></div>
-    <button class="btn btn-primary btn-full" onclick="downloadTicketPDF()">📥 Download PDF</button>
+    <button class="btn btn-primary btn-full" onclick="downloadTicketPDF()"> Download PDF</button>
     <button class="btn btn-outline btn-full" onclick="closeModal('ticket-modal')" style="margin-top:10px;">Close</button>
   </div>
 </div>
 
 <script>
 // ============================================================
-// 🔴 REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
+//  REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyAgU15_P_cmqYW0jePaaT5RqWAyOpAdYYk",
@@ -386,28 +381,10 @@ const firebaseConfig = {
   measurementId: "G-YKPY31X3S3"
 };
 
-function debugLog(message) {
-  console.log(message);
-  const debugEl = document.getElementById('debug-log');
-  if(debugEl) {
-    debugEl.innerHTML += '<br>' + message;
-  }
-}
-
 try {
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  debugLog('✅ Firebase initialized');
-  
-  db.ref('.info/connected').on('value', (snap) => {
-    if(snap.val() === true) {
-      debugLog('✅ Connected to Firebase');
-    } else {
-      debugLog('❌ Disconnected from Firebase');
-    }
-  });
 } catch(error) {
-  debugLog(' Firebase init error: ' + error.message);
+  console.error('Firebase init error:', error);
   alert('Firebase configuration error. Please check your Firebase config.');
 }
 
@@ -428,7 +405,6 @@ let selectedDateForBooking = null;
 let selectedSeatForBooking = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  debugLog('🚀 App loaded');
   setupFileUploads();
   loadAllData();
 });
@@ -473,37 +449,26 @@ function setupFileUploads() {
 }
 
 function loadAllData() {
-  debugLog('📡 Loading data from Firebase...');
-  
   db.ref('bus/trips').on('value', snap => {
     const data = snap.val();
     trips = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
-    debugLog('📅 Loaded trips: ' + trips.length);
     if(isAdmin) renderAdminTrips();
     renderCalendar();
     updateStats();
-  }, error => {
-    debugLog('❌ Error loading trips: ' + error.message);
   });
   
   db.ref('bus/bookings').on('value', snap => {
     const data = snap.val();
     bookings = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
-    debugLog('🎫 Loaded bookings: ' + bookings.length);
     if(currentUser) renderMyBookings();
     if(isAdmin) loadAdminBookings();
     updateStats();
-  }, error => {
-    debugLog('❌ Error loading bookings: ' + error.message);
   });
   
   db.ref('bus/users').on('value', snap => {
     const data = snap.val();
     users = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
-    debugLog('👥 Loaded users: ' + users.length);
     updateStats();
-  }, error => {
-    debugLog(' Error loading users: ' + error.message);
   });
   
   db.ref('bus/settings').on('value', snap => {
@@ -616,16 +581,12 @@ function employeeLogin() {
   const empId = document.getElementById('login-empid').value.trim();
   const password = document.getElementById('login-password').value;
   
-  debugLog(' Login attempt: ' + empId);
-  
   if(!empId || !password) {
     showAlert('Please fill all fields', 'error');
     return;
   }
   
   db.ref('bus/users').orderByChild('employeeId').equalTo(empId).once('value', snap => {
-    debugLog('🔍 Query result: ' + JSON.stringify(snap.val()));
-    
     let found = null;
     snap.forEach(child => {
       const data = child.val();
@@ -637,17 +598,12 @@ function employeeLogin() {
     if(found) {
       currentUser = found;
       isAdmin = false;
-      debugLog('✅ Login successful: ' + found.name);
       showAlert('Login successful!', 'success');
       updateNav();
       switchTab('calendar');
     } else {
-      debugLog('❌ Login failed - invalid credentials');
       showAlert('Invalid Employee ID or Password', 'error');
     }
-  }, error => {
-    debugLog('❌ Login error: ' + error.message);
-    showAlert('Login error: ' + error.message, 'error');
   });
 }
 
@@ -657,8 +613,6 @@ function employeeSignup() {
   const dept = document.getElementById('signup-dept').value.trim();
   const mobile = document.getElementById('signup-mobile').value.trim();
   const password = document.getElementById('signup-password').value;
-  
-  debugLog('📝 Signup attempt: ' + empId);
   
   if(!empId || !name || !dept || !mobile || !password) {
     showAlert('Please fill all fields', 'error');
@@ -679,11 +633,9 @@ function employeeSignup() {
   };
   
   db.ref('bus/users').push(newUser).then(() => {
-    debugLog('✅ Account created: ' + name);
     showAlert('Account created! Please login.', 'success');
     showLogin();
   }).catch(err => {
-    debugLog('❌ Signup error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -706,7 +658,6 @@ function showAdminLogin() {
   if(password === 'Admin@2026') {
     isAdmin = true;
     currentUser = null;
-    debugLog('✅ Admin login successful');
     updateNav();
     switchTab('admin-dashboard');
   } else if(password) {
@@ -727,15 +678,11 @@ function saveBranding() {
   if(tempLogo) branding.logo = tempLogo;
   if(tempBg) branding.background = tempBg;
   
-  debugLog(' Saving branding...');
-  
   db.ref('bus/branding').set(branding).then(() => {
-    debugLog('✅ Branding saved');
     showAlert('Branding saved successfully!', 'success');
     tempLogo = null;
     tempBg = null;
   }).catch(err => {
-    debugLog('❌ Branding save error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -847,13 +794,11 @@ function selectDateForBooking(dateStr) {
     return;
   }
   
-  // Go to seat selection
   selectedDateForBooking = dateStr;
   selectedSeatForBooking = null;
   document.getElementById('selected-date-display').innerText = formatDateDisplay(dateStr);
   document.getElementById('seat-booking-summary').style.display = 'none';
   
-  // Show seat selection tab
   switchTab('seat-selection');
   renderSeatSelection();
 }
@@ -867,25 +812,20 @@ function renderSeatSelection() {
   const tripBookings = bookings.filter(b => b.tripDate === selectedDateForBooking && b.status === 'confirmed');
   const dayAvailability = seatAvailability[selectedDateForBooking] || {};
   
-  // Create seat rows (Coaster bus layout: 2 seats, aisle, 2 seats)
   for(let row = 0; row < 6; row++) {
     for(let col = 0; col < 5; col++) {
       if(col === 2) {
-        // Aisle
         const aisle = document.createElement('div');
         aisle.className = 'aisle';
         grid.appendChild(aisle);
       } else {
-        // Calculate seat number (1-22)
         const seatNum = row * 4 + (col < 2 ? col + 1 : col);
         if(seatNum > 22) continue;
         
         const seat = document.createElement('div');
         seat.className = 'seat';
         
-        // Check if seat is booked
         const booking = tripBookings.find(b => b.seatNumber === seatNum);
-        // Check if seat is marked unavailable
         const isUnavailable = dayAvailability[seatNum] === false;
         
         if(booking) {
@@ -943,16 +883,12 @@ function confirmBookingWithSeat() {
     status: 'confirmed'
   };
   
-  debugLog('🎫 Creating booking for seat ' + selectedSeatForBooking + ' on ' + selectedDateForBooking);
-  
   db.ref('bus/bookings').push(booking).then(() => {
-    debugLog('✅ Booking created');
     showAlert('Booking confirmed for seat ' + selectedSeatForBooking + ' on ' + formatDateDisplay(selectedDateForBooking) + '!', 'success');
     selectedDateForBooking = null;
     selectedSeatForBooking = null;
     switchTab('bookings');
   }).catch(err => {
-    debugLog(' Booking error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -966,8 +902,6 @@ function updateStats() {
 function addTrip() {
   const date = document.getElementById('trip-date').value;
   const time = document.getElementById('trip-time').value;
-  
-  debugLog('📅 Adding trip: ' + date + ' at ' + time);
   
   if(!date || !time) {
     showAlert('Please select date and time', 'error');
@@ -984,11 +918,9 @@ function addTrip() {
     time: time,
     createdAt: Date.now()
   }).then(() => {
-    debugLog('✅ Trip added: ' + date);
     showAlert('Trip added successfully for ' + formatDateDisplay(date) + '!', 'success');
     document.getElementById('trip-date').value = '';
   }).catch(err => {
-    debugLog('❌ Add trip error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1018,10 +950,8 @@ function renderAdminTrips() {
 function deleteTrip(tripId) {
   if(!confirm('Delete this trip?')) return;
   db.ref('bus/trips/' + tripId).remove().then(() => {
-    debugLog('✅ Trip deleted');
     showAlert('Trip deleted', 'success');
   }).catch(err => {
-    debugLog('❌ Delete trip error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1075,13 +1005,9 @@ function saveSeatAvailability() {
     availability[seatNum] = cb.checked;
   });
   
-  debugLog('💾 Saving seat availability for ' + date);
-  
   db.ref('bus/seatAvailability/' + date).set(availability).then(() => {
-    debugLog('✅ Seat availability saved');
     showAlert('Seat availability saved for ' + formatDateDisplay(date), 'success');
   }).catch(err => {
-    debugLog('❌ Save seat error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1105,7 +1031,7 @@ function loadAdminBookings() {
       <td>
         <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">🎫</button>
         ${b.status === 'confirmed' ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking('${b.id}')">Cancel</button>` : ''}
-        <button class="btn btn-danger btn-sm" onclick="deleteBooking('${b.id}')" style="margin-left:5px;">️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteBooking('${b.id}')" style="margin-left:5px;">🗑️</button>
       </td>
     </tr>
   `).join('');
@@ -1114,10 +1040,8 @@ function loadAdminBookings() {
 function cancelBooking(bookingId) {
   if(!confirm('Cancel this booking?')) return;
   db.ref('bus/bookings/' + bookingId).update({status: 'cancelled'}).then(() => {
-    debugLog('✅ Booking cancelled');
     showAlert('Booking cancelled', 'success');
   }).catch(err => {
-    debugLog('❌ Cancel booking error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1125,10 +1049,8 @@ function cancelBooking(bookingId) {
 function deleteBooking(bookingId) {
   if(!confirm('Delete this booking permanently? This cannot be undone.')) return;
   db.ref('bus/bookings/' + bookingId).remove().then(() => {
-    debugLog('✅ Booking deleted');
     showAlert('Booking deleted permanently', 'success');
   }).catch(err => {
-    debugLog('❌ Delete booking error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1192,14 +1114,10 @@ function confirmBookOnBehalf() {
     bookedBy: 'admin'
   };
   
-  debugLog('🎫 Creating booking on behalf for ' + user.name);
-  
   db.ref('bus/bookings').push(booking).then(() => {
-    debugLog('✅ Booking created on behalf');
     showAlert('Booking created for ' + user.name + ' on ' + formatDateDisplay(tripDate), 'success');
     closeModal('book-on-behalf-modal');
   }).catch(err => {
-    debugLog('❌ Book on behalf error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1230,7 +1148,7 @@ function viewTicket(bookingId) {
         <div class="ticket-detail-box"><label>Booking Time</label><strong>${new Date(booking.bookedAt).toLocaleString()}</strong></div>
       </div>
       <div class="ticket-qr">
-        <canvas id="qrcode"></canvas>
+        <div id="qrcode-container"></div>
         <p style="margin-top:10px;color:#64748b;font-size:0.85rem;">Scan QR code for verification</p>
       </div>
     </div>
@@ -1239,33 +1157,24 @@ function viewTicket(bookingId) {
   document.getElementById('ticket-content').innerHTML = html;
   document.getElementById('ticket-modal').classList.add('active');
   
-  // Generate QR code using QRCode library
+  // Generate QR code after modal is shown
   setTimeout(() => {
-    const canvas = document.getElementById('qrcode');
-    if(canvas && typeof QRCode !== 'undefined') {
-      const qrData = JSON.stringify({
-        bookingId: booking.id,
-        employeeId: booking.employeeId,
-        name: booking.name,
-        seat: booking.seatNumber,
-        date: booking.tripDate,
-        time: booking.tripTime
+    const qrContainer = document.getElementById('qrcode-container');
+    if(qrContainer && typeof QRCode !== 'undefined') {
+      qrContainer.innerHTML = '';
+      const qrData = `BUS_TICKET|${booking.employeeId}|${booking.name}|Seat:${booking.seatNumber}|${booking.tripDate}|${booking.tripTime}`;
+      new QRCode(qrContainer, {
+        text: qrData,
+        width: 180,
+        height: 180,
+        colorDark: "#0f766e",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
       });
-      
-      QRCode.toCanvas(canvas, qrData, {
-        width: 200,
-        margin: 2,
-        color: {
-          dark: '#0f766e',
-          light: '#ffffff'
-        }
-      }, function(error) {
-        if(error) {
-          console.error('QR Code generation error:', error);
-        }
-      });
+    } else {
+      qrContainer.innerHTML = '<p style="color:red;">QR Code library not loaded</p>';
     }
-  }, 100);
+  }, 200);
 }
 
 function downloadTicketPDF() {
@@ -1344,9 +1253,9 @@ function renderMyBookings() {
         <div class="booking-detail"><label>Status</label><strong style="color:${b.status === 'confirmed' ? 'var(--success)' : 'var(--danger)'};">${b.status === 'confirmed' ? '✅ Confirmed' : '❌ Cancelled'}</strong></div>
       </div>
       <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">🎫 View/Download Ticket</button>
-        ${b.status === 'confirmed' ? `<button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.id}')">Cancel</button>` : ''}
-        <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">🗑️ Delete</button>
+        <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')"> View/Download Ticket</button>
+        ${b.status === 'confirmed' ? `<button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.id}')">❌ Cancel</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">️ Delete</button>
       </div>
     </div>
   `).join('');
@@ -1355,10 +1264,8 @@ function renderMyBookings() {
 function cancelMyBooking(bookingId) {
   if(!confirm('Cancel this booking?')) return;
   db.ref('bus/bookings/' + bookingId).update({status: 'cancelled'}).then(() => {
-    debugLog('✅ My booking cancelled');
     showAlert('Booking cancelled', 'success');
   }).catch(err => {
-    debugLog('❌ Cancel my booking error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1366,10 +1273,8 @@ function cancelMyBooking(bookingId) {
 function deleteMyBooking(bookingId) {
   if(!confirm('Delete this booking permanently? This cannot be undone.')) return;
   db.ref('bus/bookings/' + bookingId).remove().then(() => {
-    debugLog('✅ My booking deleted');
     showAlert('Booking deleted permanently', 'success');
   }).catch(err => {
-    debugLog(' Delete my booking error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1381,11 +1286,9 @@ function saveSettings() {
   };
   
   db.ref('bus/settings').set(updates).then(() => {
-    debugLog('✅ Settings saved');
     showAlert('Settings saved', 'success');
     settings = {...settings, ...updates};
   }).catch(err => {
-    debugLog('❌ Save settings error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
