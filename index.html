@@ -22,7 +22,7 @@ body.has-bg{background-size:cover;background-attachment:fixed;background-positio
 .navbar{background:#fff;padding:12px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);position:sticky;top:0;z-index:100;}
 .nav-content{max-width:1200px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 .nav-btn{background:transparent;color:var(--brand);border:2px solid var(--brand);padding:8px 18px;border-radius:20px;cursor:pointer;font-weight:600;transition:all 0.3s;font-size:0.9rem;}
-.nav-btn:hover,.nav-btn.active{background:var(--brand);color:#fff;transform:translateY(-2px);}
+.nav-btn:hover,.nav-btn.active{background:var(--brand);color:#fff;}
 .nav-btn.hidden{display:none !important;}
 .user-info{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--brand);font-weight:600;}
 .container{max-width:1200px;margin:30px auto;padding:0 20px;}
@@ -30,15 +30,14 @@ body.has-bg{background-size:cover;background-attachment:fixed;background-positio
 .card h2{color:var(--brand);margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid var(--brand-light);font-size:1.4rem;}
 .form-group{margin-bottom:15px;}
 label{display:block;margin-bottom:6px;font-weight:600;color:#475569;font-size:0.9rem;}
-input,select,textarea{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:1rem;background:#fff;}
+input,select{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:1rem;background:#fff;}
 input:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,118,110,0.1);}
 .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95rem;transition:all 0.3s;display:inline-flex;align-items:center;gap:6px;}
 .btn-primary{background:var(--brand);color:#fff;}
-.btn-primary:hover{background:var(--brand-dark);transform:translateY(-2px);box-shadow:0 6px 15px rgba(15,118,110,0.3);}
+.btn-primary:hover{background:var(--brand-dark);transform:translateY(-2px);}
 .btn-danger{background:var(--danger);color:#fff;}
 .btn-success{background:var(--success);color:#fff;}
 .btn-outline{background:transparent;border:2px solid var(--brand);color:var(--brand);}
-.btn-outline:hover{background:var(--brand);color:#fff;}
 .btn-full{width:100%;justify-content:center;margin-top:15px;padding:12px;}
 .btn-sm{padding:6px 12px;font-size:0.85rem;}
 .tab-content{display:none;animation:fadeIn 0.4s;}
@@ -49,7 +48,7 @@ input:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0
 .alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
 .login-box{max-width:450px;margin:60px auto;}
 .login-box .card{text-align:center;}
-.file-upload{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#fafafa;}
+.file-upload{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;background:#fafafa;}
 .file-upload:hover{border-color:var(--brand);background:#f0fdfa;}
 .file-upload input{display:none;}
 table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;border-radius:8px;overflow:hidden;}
@@ -87,6 +86,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 .ticket-detail-box label{font-size:0.8rem;color:#64748b;margin-bottom:3px;display:block;}
 .ticket-detail-box strong{font-size:1.1rem;color:var(--text);}
 .ticket-qr{text-align:center;padding:20px;background:#f8fafc;border-radius:8px;}
+.debug-panel{background:#1e293b;color:#10b981;padding:15px;border-radius:8px;margin-bottom:20px;font-family:monospace;font-size:0.85rem;max-height:200px;overflow-y:auto;}
 @media(max-width:768px){.header-content{flex-direction:column;text-align:center;}.nav-content{flex-direction:column;}.nav-btn{width:100%;}.booking-details,.ticket-details-grid{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -94,7 +94,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 
 <div class="header">
   <div class="header-content">
-    <div class="logo-circle" id="app-logo">🚌</div>
+    <div class="logo-circle" id="app-logo"></div>
     <div class="header-info">
       <h1 id="app-hotel-name">Bus Booking System</h1>
       <p id="app-tagline">Umluj Shopping Trip - Coaster Bus</p>
@@ -105,14 +105,14 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 <div class="navbar">
   <div class="nav-content">
     <button class="nav-btn hidden" id="nav-calendar" onclick="switchTab('calendar')">📅 Select Date</button>
-    <button class="nav-btn hidden" id="nav-bookings" onclick="switchTab('bookings')"> My Bookings</button>
+    <button class="nav-btn hidden" id="nav-bookings" onclick="switchTab('bookings')">🎫 My Bookings</button>
     <button class="nav-btn hidden" id="nav-admin-dashboard" onclick="switchTab('admin-dashboard')">📊 Dashboard</button>
     <button class="nav-btn hidden" id="nav-admin-calendar" onclick="switchTab('admin-calendar')">📅 Manage Calendar</button>
     <button class="nav-btn hidden" id="nav-admin-seats" onclick="switchTab('admin-seats')">💺 Manage Seats</button>
-    <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings')"> All Bookings</button>
+    <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings')">📋 All Bookings</button>
     <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings')">⚙️ Settings</button>
-    <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')">🎨 Branding</button>
-    <button class="nav-btn" id="nav-login" onclick="showLogin()"> Login</button>
+    <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')"> Branding</button>
+    <button class="nav-btn" id="nav-login" onclick="showLogin()">🔐 Login</button>
     <button class="nav-btn" id="nav-admin-btn" onclick="showAdminLogin()" style="margin-left:auto;">⚙️ Admin</button>
     <div class="user-info hidden" id="user-info">
       <span id="user-name-display">👤 User</span>
@@ -122,6 +122,12 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 </div>
 
 <div class="container">
+  <!-- Debug Panel - Shows what's happening -->
+  <div class="debug-panel" id="debug-panel">
+    <strong>🔍 Debug Log:</strong><br>
+    <span id="debug-log">App starting...</span>
+  </div>
+
   <div id="alert-success" class="alert alert-success"></div>
   <div id="alert-error" class="alert alert-error"></div>
 
@@ -134,7 +140,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
         <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Enter Password"></div>
         <button class="btn btn-primary btn-full" onclick="employeeLogin()">Login</button>
         <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
-          <button class="btn btn-outline btn-full" onclick="showSignup()"> Create Account</button>
+          <button class="btn btn-outline btn-full" onclick="showSignup()">📝 Create Account</button>
         </div>
       </div>
     </div>
@@ -144,7 +150,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <div id="tab-signup" class="tab-content">
     <div class="login-box">
       <div class="card">
-        <h2> Create Account</h2>
+        <h2>📝 Create Account</h2>
         <div class="form-group"><label>Employee ID *</label><input type="text" id="signup-empid"></div>
         <div class="form-group"><label>Full Name *</label><input type="text" id="signup-name"></div>
         <div class="form-group"><label>Department *</label><input type="text" id="signup-dept"></div>
@@ -159,7 +165,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- CALENDAR -->
   <div id="tab-calendar" class="tab-content">
     <div class="card">
-      <h2> Select Travel Date</h2>
+      <h2>📅 Select Travel Date</h2>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <button class="btn btn-outline" onclick="changeMonth(-1)">← Previous</button>
         <h3 id="calendar-month-year"></h3>
@@ -172,7 +178,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- MY BOOKINGS -->
   <div id="tab-bookings" class="tab-content">
     <div class="card">
-      <h2> My Bookings</h2>
+      <h2>🎫 My Bookings</h2>
       <div id="my-bookings-list"></div>
     </div>
   </div>
@@ -180,7 +186,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- ADMIN DASHBOARD -->
   <div id="tab-admin-dashboard" class="tab-content">
     <div class="card">
-      <h2> Dashboard Overview</h2>
+      <h2>📊 Dashboard Overview</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
         <div style="background:linear-gradient(135deg,var(--brand),var(--brand-light));color:#fff;padding:20px;border-radius:10px;text-align:center;">
           <div style="font-size:2rem;font-weight:bold;" id="stat-bookings">0</div><div>Total Bookings</div>
@@ -245,7 +251,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- ADMIN SETTINGS -->
   <div id="tab-admin-settings" class="tab-content">
     <div class="card">
-      <h2>⚙️ Booking Settings</h2>
+      <h2>️ Booking Settings</h2>
       <div class="form-group"><label>Booking Opens At</label><input type="time" id="setting-open-time" value="10:00"></div>
       <div class="form-group"><label>Booking Closes At</label><input type="time" id="setting-close-time" value="18:30"></div>
       <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
@@ -277,7 +283,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
         <img id="brand-bg-preview" style="max-width:100%;margin-top:10px;border-radius:10px;display:none;">
       </div>
       <div class="form-group"><label>Primary Color</label><input type="color" id="brand-color" value="#0f766e" style="width:100px;height:40px;"></div>
-      <button class="btn btn-primary btn-full" onclick="saveBranding()"> Save Branding</button>
+      <button class="btn btn-primary btn-full" onclick="saveBranding()">💾 Save Branding</button>
     </div>
   </div>
 </div>
@@ -308,26 +314,55 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <div class="modal-content">
     <h2 style="color:var(--brand);margin-bottom:15px;">🎫 Bus Ticket</h2>
     <div id="ticket-content"></div>
-    <button class="btn btn-primary btn-full" onclick="downloadTicketPDF()"> Download PDF</button>
+    <button class="btn btn-primary btn-full" onclick="downloadTicketPDF()">📥 Download PDF</button>
     <button class="btn btn-outline btn-full" onclick="closeModal('ticket-modal')" style="margin-top:10px;">Close</button>
   </div>
 </div>
 
 <script>
 // ============================================================
-// ️ REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
+// 🔴 CRITICAL: REPLACE THIS ENTIRE BLOCK WITH YOUR REAL FIREBASE CONFIG
+// Get it from: Firebase Console → Project Settings → Your apps → Web app
 // ============================================================
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "busbooking.firebaseapp.com",
-  databaseURL: "https://busbooking-default-rtdb.firebaseio.com",
-  projectId: "busbooking",
-  storageBucket: "busbooking.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAgU15_P_cmqYW0jePaaT5RqWAyOpAdYYk",
+  authDomain: "busbooking-b5662.firebaseapp.com",
+  databaseURL: "https://busbooking-b5662-default-rtdb.firebaseio.com",
+  projectId: "busbooking-b5662",
+  storageBucket: "busbooking-b5662.firebasestorage.app",
+  messagingSenderId: "829369142403",
+  appId: "1:829369142403:web:a5891f33a3efe71cf65fb6",
+  measurementId: "G-YKPY31X3S3"
 };
 
-firebase.initializeApp(firebaseConfig);
+// Debug logging function
+function debugLog(message) {
+  console.log(message);
+  const debugEl = document.getElementById('debug-log');
+  if(debugEl) {
+    debugEl.innerHTML += '<br>' + message;
+  }
+}
+
+// Initialize Firebase
+try {
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  debugLog('✅ Firebase initialized');
+  
+  // Test connection
+  db.ref('.info/connected').on('value', (snap) => {
+    if(snap.val() === true) {
+      debugLog('✅ Connected to Firebase');
+    } else {
+      debugLog('❌ Disconnected from Firebase');
+    }
+  });
+} catch(error) {
+  debugLog('❌ Firebase init error: ' + error.message);
+  alert('Firebase configuration error. Please check your Firebase config.');
+}
+
 const db = firebase.database();
 
 let currentUser = null;
@@ -344,6 +379,7 @@ let currentTicketData = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  debugLog('🚀 App loaded');
   setupFileUploads();
   loadAllData();
 });
@@ -388,26 +424,37 @@ function setupFileUploads() {
 }
 
 function loadAllData() {
+  debugLog('📡 Loading data from Firebase...');
+  
   db.ref('bus/trips').on('value', snap => {
     const data = snap.val();
     trips = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+    debugLog('📅 Loaded trips: ' + trips.length);
     if(isAdmin) renderAdminTrips();
     renderCalendar();
     updateStats();
+  }, error => {
+    debugLog('❌ Error loading trips: ' + error.message);
   });
   
   db.ref('bus/bookings').on('value', snap => {
     const data = snap.val();
     bookings = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+    debugLog('🎫 Loaded bookings: ' + bookings.length);
     if(currentUser) renderMyBookings();
     if(isAdmin) loadAdminBookings();
     updateStats();
+  }, error => {
+    debugLog('❌ Error loading bookings: ' + error.message);
   });
   
   db.ref('bus/users').on('value', snap => {
     const data = snap.val();
     users = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+    debugLog(' Loaded users: ' + users.length);
     updateStats();
+  }, error => {
+    debugLog('❌ Error loading users: ' + error.message);
   });
   
   db.ref('bus/settings').on('value', snap => {
@@ -452,9 +499,7 @@ function loadAllData() {
   });
 }
 
-// ============ DATE HANDLING (FIXED) ============
 function getLocalDateStr(dateObj) {
-  // Returns YYYY-MM-DD in LOCAL timezone
   const year = dateObj.getFullYear();
   const month = String(dateObj.getMonth() + 1).padStart(2, '0');
   const day = String(dateObj.getDate()).padStart(2, '0');
@@ -462,7 +507,6 @@ function getLocalDateStr(dateObj) {
 }
 
 function formatDateDisplay(dateStr) {
-  // dateStr is YYYY-MM-DD, display as DD/MM/YYYY
   if(!dateStr) return 'N/A';
   const [year, month, day] = dateStr.split('-');
   return `${day}/${month}/${year}`;
@@ -511,10 +555,10 @@ function updateNav() {
       document.getElementById(id).classList.remove('hidden');
     });
     document.getElementById('user-info').classList.remove('hidden');
-    document.getElementById('user-name-display').innerText = '👤 ' + currentUser.name;
+    document.getElementById('user-name-display').innerText = ' ' + currentUser.name;
   } else {
     document.getElementById('nav-login').classList.remove('hidden');
-    document.getElementById('nav-login').innerText = '🔐 Login';
+    document.getElementById('nav-login').innerText = ' Login';
   }
 }
 
@@ -522,12 +566,16 @@ function employeeLogin() {
   const empId = document.getElementById('login-empid').value.trim();
   const password = document.getElementById('login-password').value;
   
+  debugLog('🔐 Login attempt: ' + empId);
+  
   if(!empId || !password) {
     showAlert('Please fill all fields', 'error');
     return;
   }
   
   db.ref('bus/users').orderByChild('employeeId').equalTo(empId).once('value', snap => {
+    debugLog(' Query result: ' + JSON.stringify(snap.val()));
+    
     let found = null;
     snap.forEach(child => {
       const data = child.val();
@@ -539,12 +587,17 @@ function employeeLogin() {
     if(found) {
       currentUser = found;
       isAdmin = false;
+      debugLog('✅ Login successful: ' + found.name);
       showAlert('Login successful!', 'success');
       updateNav();
       switchTab('calendar');
     } else {
+      debugLog('❌ Login failed - invalid credentials');
       showAlert('Invalid Employee ID or Password', 'error');
     }
+  }, error => {
+    debugLog('❌ Login error: ' + error.message);
+    showAlert('Login error: ' + error.message, 'error');
   });
 }
 
@@ -554,6 +607,8 @@ function employeeSignup() {
   const dept = document.getElementById('signup-dept').value.trim();
   const mobile = document.getElementById('signup-mobile').value.trim();
   const password = document.getElementById('signup-password').value;
+  
+  debugLog('📝 Signup attempt: ' + empId);
   
   if(!empId || !name || !dept || !mobile || !password) {
     showAlert('Please fill all fields', 'error');
@@ -574,9 +629,11 @@ function employeeSignup() {
   };
   
   db.ref('bus/users').push(newUser).then(() => {
+    debugLog('✅ Account created: ' + name);
     showAlert('Account created! Please login.', 'success');
     showLogin();
   }).catch(err => {
+    debugLog('❌ Signup error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -599,6 +656,7 @@ function showAdminLogin() {
   if(password === 'Admin@2026') {
     isAdmin = true;
     currentUser = null;
+    debugLog('✅ Admin login successful');
     updateNav();
     switchTab('admin-dashboard');
   } else if(password) {
@@ -619,16 +677,19 @@ function saveBranding() {
   if(tempLogo) branding.logo = tempLogo;
   if(tempBg) branding.background = tempBg;
   
+  debugLog('💾 Saving branding...');
+  
   db.ref('bus/branding').set(branding).then(() => {
+    debugLog('✅ Branding saved');
     showAlert('Branding saved successfully!', 'success');
     tempLogo = null;
     tempBg = null;
   }).catch(err => {
+    debugLog('❌ Branding save error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
 
-// ============ CALENDAR (COMPLETELY FIXED) ============
 function renderCalendar() {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -654,15 +715,11 @@ function renderCalendar() {
     grid.appendChild(document.createElement('div'));
   }
   
-  // Get today's date in LOCAL format
   const todayStr = getLocalDateStr(new Date());
   
   for(let day = 1; day <= daysInMonth; day++) {
-    // Create date in LOCAL timezone
     const dateObj = new Date(year, month, day);
     const dateStr = getLocalDateStr(dateObj);
-    
-    // Find trip for this date
     const trip = trips.find(t => t.date === dateStr);
     const isPast = dateStr < todayStr;
     
@@ -709,7 +766,6 @@ function selectDate(dateStr) {
     return;
   }
   
-  // Check if booking is open
   const now = new Date();
   const [openHour, openMin] = settings.openTime.split(':').map(Number);
   const [closeHour, closeMin] = settings.closeTime.split(':').map(Number);
@@ -730,7 +786,6 @@ function selectDate(dateStr) {
     return;
   }
   
-  // Check if user already has booking
   const existingBooking = bookings.find(b => 
     b.userId === currentUser.id && 
     b.tripDate === dateStr && 
@@ -742,7 +797,6 @@ function selectDate(dateStr) {
     return;
   }
   
-  // Create booking
   const booking = {
     userId: currentUser.id,
     employeeId: currentUser.employeeId,
@@ -751,15 +805,19 @@ function selectDate(dateStr) {
     mobile: currentUser.mobile,
     tripDate: dateStr,
     tripTime: trip.time,
-    seatNumber: 1, // Default seat, can be enhanced
+    seatNumber: 1,
     bookedAt: Date.now(),
     status: 'confirmed'
   };
   
+  debugLog(' Creating booking for ' + dateStr);
+  
   db.ref('bus/bookings').push(booking).then(() => {
+    debugLog('✅ Booking created');
     showAlert('Booking confirmed for ' + formatDateDisplay(dateStr) + '!', 'success');
     switchTab('bookings');
   }).catch(err => {
+    debugLog('❌ Booking error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -773,6 +831,8 @@ function updateStats() {
 function addTrip() {
   const date = document.getElementById('trip-date').value;
   const time = document.getElementById('trip-time').value;
+  
+  debugLog('📅 Adding trip: ' + date + ' at ' + time);
   
   if(!date || !time) {
     showAlert('Please select date and time', 'error');
@@ -789,9 +849,11 @@ function addTrip() {
     time: time,
     createdAt: Date.now()
   }).then(() => {
+    debugLog('✅ Trip added: ' + date);
     showAlert('Trip added successfully for ' + formatDateDisplay(date) + '!', 'success');
     document.getElementById('trip-date').value = '';
   }).catch(err => {
+    debugLog('❌ Add trip error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -812,7 +874,7 @@ function renderAdminTrips() {
           <strong>${formatDateDisplay(t.date)}</strong>
           <div style="color:#64748b;font-size:0.9rem;">Departure: ${t.time} • ${count}/22 seats booked</div>
         </div>
-        <button class="btn btn-danger btn-sm" onclick="deleteTrip('${t.id}')">️ Delete</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTrip('${t.id}')">🗑️ Delete</button>
       </div>
     `;
   }).join('');
@@ -821,13 +883,14 @@ function renderAdminTrips() {
 function deleteTrip(tripId) {
   if(!confirm('Delete this trip?')) return;
   db.ref('bus/trips/' + tripId).remove().then(() => {
+    debugLog('✅ Trip deleted');
     showAlert('Trip deleted', 'success');
   }).catch(err => {
+    debugLog('❌ Delete trip error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
 
-// ============ SEAT MANAGEMENT ============
 function loadSeatManagement() {
   const date = document.getElementById('seat-date').value;
   if(!date) return;
@@ -877,14 +940,17 @@ function saveSeatAvailability() {
     availability[seatNum] = cb.checked;
   });
   
+  debugLog('💾 Saving seat availability for ' + date);
+  
   db.ref('bus/seatAvailability/' + date).set(availability).then(() => {
+    debugLog('✅ Seat availability saved');
     showAlert('Seat availability saved for ' + formatDateDisplay(date), 'success');
   }).catch(err => {
+    debugLog('❌ Save seat error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
 
-// ============ ADMIN BOOKINGS ============
 function loadAdminBookings() {
   const tbody = document.getElementById('admin-bookings-tbody');
   
@@ -912,23 +978,21 @@ function loadAdminBookings() {
 function cancelBooking(bookingId) {
   if(!confirm('Cancel this booking?')) return;
   db.ref('bus/bookings/' + bookingId).update({status: 'cancelled'}).then(() => {
+    debugLog('✅ Booking cancelled');
     showAlert('Booking cancelled', 'success');
   }).catch(err => {
+    debugLog('❌ Cancel booking error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
 
-// ============ BOOK ON BEHALF ============
 function showBookOnBehalfModal() {
-  // Populate employee dropdown
   const empSelect = document.getElementById('behalf-employee');
   empSelect.innerHTML = users.map(u => `<option value="${u.id}">${u.name} (${u.employeeId})</option>`).join('');
   
-  // Populate trip dropdown
   const tripSelect = document.getElementById('behalf-trip');
   tripSelect.innerHTML = trips.map(t => `<option value="${t.date}">${formatDateDisplay(t.date)} - ${t.time}</option>`).join('');
   
-  // Populate seat dropdown
   const seatSelect = document.getElementById('behalf-seat');
   seatSelect.innerHTML = '';
   for(let i = 1; i <= 22; i++) {
@@ -956,7 +1020,6 @@ function confirmBookOnBehalf() {
     return;
   }
   
-  // Check if user already has booking for this date
   const existingBooking = bookings.find(b => 
     b.userId === userId && 
     b.tripDate === tripDate && 
@@ -982,15 +1045,18 @@ function confirmBookOnBehalf() {
     bookedBy: 'admin'
   };
   
+  debugLog('🎫 Creating booking on behalf for ' + user.name);
+  
   db.ref('bus/bookings').push(booking).then(() => {
+    debugLog('✅ Booking created on behalf');
     showAlert('Booking created for ' + user.name + ' on ' + formatDateDisplay(tripDate), 'success');
     closeModal('book-on-behalf-modal');
   }).catch(err => {
+    debugLog('❌ Book on behalf error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
 
-// ============ TICKET VIEW & DOWNLOAD ============
 function viewTicket(bookingId) {
   const booking = bookings.find(b => b.id === bookingId);
   if(!booking) {
@@ -1026,7 +1092,6 @@ function viewTicket(bookingId) {
   document.getElementById('ticket-content').innerHTML = html;
   document.getElementById('ticket-modal').classList.add('active');
   
-  // Generate QR code after modal is shown
   setTimeout(() => {
     const qrContainer = document.getElementById('qrcode');
     if(qrContainer && typeof QRCode !== 'undefined') {
@@ -1058,7 +1123,6 @@ function downloadTicketPDF() {
     const doc = new jsPDF();
     const b = currentTicketData;
     
-    // Header
     doc.setFillColor(15, 118, 110);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
@@ -1067,7 +1131,6 @@ function downloadTicketPDF() {
     doc.setFontSize(12);
     doc.text('Bus Ticket - Umluj Shopping Trip', 105, 30, {align: 'center'});
     
-    // Content
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
     let y = 60;
@@ -1092,7 +1155,6 @@ function downloadTicketPDF() {
       y += 10;
     });
     
-    // Footer
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
     doc.text('Please arrive 15 minutes before departure time', 105, 270, {align: 'center'});
@@ -1136,8 +1198,10 @@ function renderMyBookings() {
 function cancelMyBooking(bookingId) {
   if(!confirm('Cancel this booking?')) return;
   db.ref('bus/bookings/' + bookingId).update({status: 'cancelled'}).then(() => {
+    debugLog('✅ My booking cancelled');
     showAlert('Booking cancelled', 'success');
   }).catch(err => {
+    debugLog('❌ Cancel my booking error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1149,9 +1213,11 @@ function saveSettings() {
   };
   
   db.ref('bus/settings').set(updates).then(() => {
+    debugLog('✅ Settings saved');
     showAlert('Settings saved', 'success');
     settings = {...settings, ...updates};
   }).catch(err => {
+    debugLog('❌ Save settings error: ' + err.message);
     showAlert('Error: ' + err.message, 'error');
   });
 }
