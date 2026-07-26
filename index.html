@@ -6,74 +6,62 @@
 <title>Bus Booking System - Umluj Shopping Trip</title>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.1/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{
   --brand:#0f766e;--brand-light:#14b8a6;--brand-dark:#0d5c56;
   --bg:#f0fdfa;--card:#fff;--text:#1e293b;--border:#e2e8f0;
-  --success:#10b981;--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;
+  --success:#10b981;--danger:#ef4444;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 body.has-bg{background-size:cover;background-attachment:fixed;background-position:center;}
 
-.header{background:linear-gradient(135deg,var(--brand-dark),var(--brand));color:#fff;padding:20px;box-shadow:0 4px 20px rgba(15,118,110,0.3);}
+.header{background:linear-gradient(135deg,var(--brand-dark),var(--brand));color:#fff;padding:20px;}
 .header-content{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
-.logo-circle{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 4px 15px rgba(0,0,0,0.2);overflow:hidden;}
+.logo-circle{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;}
 .logo-circle img{width:100%;height:100%;object-fit:cover;}
 .header-info h1{font-size:1.8rem;margin-bottom:5px;}
-.header-info p{opacity:0.9;font-size:1rem;}
+.header-info p{opacity:0.9;}
 
-.navbar{background:#fff;padding:12px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);position:sticky;top:0;z-index:100;}
+.navbar{background:#fff;padding:12px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);position:sticky;top:0;}
 .nav-content{max-width:1200px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-.nav-btn{background:transparent;color:var(--brand);border:2px solid var(--brand);padding:8px 18px;border-radius:20px;cursor:pointer;font-weight:600;transition:all 0.3s;font-size:0.9rem;}
-.nav-btn:hover,.nav-btn.active{background:var(--brand);color:#fff;transform:translateY(-2px);}
+.nav-btn{background:transparent;color:var(--brand);border:2px solid var(--brand);padding:8px 18px;border-radius:20px;cursor:pointer;font-weight:600;}
+.nav-btn:hover,.nav-btn.active{background:var(--brand);color:#fff;}
 .nav-btn.hidden{display:none;}
-.user-info{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--brand);font-weight:600;}
+.user-info{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--brand);}
 
 .container{max-width:1200px;margin:30px auto;padding:0 20px;}
-
-.card{background:var(--card);border-radius:12px;padding:25px;box-shadow:0 4px 15px rgba(0,0,0,0.06);margin-bottom:20px;border:1px solid var(--border);}
-.card h2{color:var(--brand);margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid var(--brand-light);font-size:1.4rem;}
+.card{background:var(--card);border-radius:12px;padding:25px;box-shadow:0 4px 15px rgba(0,0,0,0.06);margin-bottom:20px;}
+.card h2{color:var(--brand);margin-bottom:20px;border-bottom:3px solid var(--brand-light);padding-bottom:10px;}
 
 .form-group{margin-bottom:15px;}
-label{display:block;margin-bottom:6px;font-weight:600;color:#475569;font-size:0.9rem;}
-input,select,textarea{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:1rem;transition:all 0.3s;background:#fff;}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,118,110,0.1);}
+label{display:block;margin-bottom:6px;font-weight:600;}
+input,select{width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:1rem;}
+input:focus{outline:none;border-color:var(--brand);}
 
-.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95rem;transition:all 0.3s;display:inline-flex;align-items:center;gap:6px;}
+.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
 .btn-primary{background:var(--brand);color:#fff;}
-.btn-primary:hover{background:var(--brand-dark);transform:translateY(-2px);box-shadow:0 6px 15px rgba(15,118,110,0.3);}
-.btn-success{background:var(--success);color:#fff;}
-.btn-danger{background:var(--danger);color:#fff;}
-.btn-outline{background:transparent;border:2px solid var(--brand);color:var(--brand);}
-.btn-full{width:100%;justify-content:center;margin-top:15px;padding:12px;}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-full{width:100%;justify-content:center;margin-top:15px;}
 .btn-sm{padding:6px 12px;font-size:0.85rem;}
 
-.tab-content{display:none;animation:fadeIn 0.4s;}
+.tab-content{display:none;}
 .tab-content.active{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
-.alert{padding:12px 18px;border-radius:8px;margin-bottom:15px;display:none;font-weight:500;}
-.alert-success{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
-.alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
-
-table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;border-radius:8px;overflow:hidden;}
-th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border);}
-th{background:var(--brand);color:#fff;font-weight:600;}
-
-.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;}
-.modal.active{display:flex;}
-.modal-content{background:#fff;padding:30px;border-radius:15px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;}
+.alert{padding:12px;border-radius:8px;margin-bottom:15px;display:none;}
+.alert-success{background:#d1fae5;color:#065f46;}
+.alert-error{background:#fee2e2;color:#991b1b;}
 
 .login-box{max-width:450px;margin:60px auto;}
 .login-box .card{text-align:center;}
 
-.file-upload{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#fafafa;}
+.file-upload{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;}
 .file-upload:hover{border-color:var(--brand);background:#f0fdfa;}
 .file-upload input{display:none;}
+
+table{width:100%;border-collapse:collapse;}
+th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border);}
+th{background:var(--brand);color:#fff;}
 
 @media(max-width:768px){
   .header-content{flex-direction:column;text-align:center;}
@@ -96,21 +84,20 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 
 <div class="navbar">
   <div class="nav-content">
-    <button class="nav-btn hidden" id="nav-calendar" onclick="switchTab('calendar',this)"> Select Date</button>
-    <button class="nav-btn hidden" id="nav-seats" onclick="switchTab('seats',this)">💺 Select Seats</button>
-    <button class="nav-btn hidden" id="nav-bookings" onclick="switchTab('bookings',this)">🎫 My Bookings</button>
+    <button class="nav-btn hidden" id="nav-calendar" onclick="switchTab('calendar')">📅 Select Date</button>
+    <button class="nav-btn hidden" id="nav-bookings" onclick="switchTab('bookings')">🎫 My Bookings</button>
     
-    <button class="nav-btn hidden" id="nav-admin-dashboard" onclick="switchTab('admin-dashboard',this)">📊 Dashboard</button>
-    <button class="nav-btn hidden" id="nav-admin-calendar" onclick="switchTab('admin-calendar',this)">📅 Manage Calendar</button>
-    <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings',this)">📋 All Bookings</button>
-    <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings',this)">⚙️ Settings</button>
-    <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding',this)">🎨 Branding</button>
+    <button class="nav-btn hidden" id="nav-admin-dashboard" onclick="switchTab('admin-dashboard')">📊 Dashboard</button>
+    <button class="nav-btn hidden" id="nav-admin-calendar" onclick="switchTab('admin-calendar')">📅 Manage Calendar</button>
+    <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings')">📋 All Bookings</button>
+    <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings')">⚙️ Settings</button>
+    <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')">🎨 Branding</button>
     
     <button class="nav-btn" id="nav-login" onclick="showLogin()">🔐 Login</button>
     <button class="nav-btn" id="nav-admin-btn" onclick="showAdminLogin()" style="margin-left:auto;">⚙️ Admin</button>
     <div class="user-info hidden" id="user-info">
-      <span id="user-name-display"> User</span>
-      <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+      <span id="user-name-display">👤 User</span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Logout</button>
     </div>
   </div>
 </div>
@@ -119,18 +106,18 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <div id="alert-success" class="alert alert-success"></div>
   <div id="alert-error" class="alert alert-error"></div>
 
-  <!-- LOGIN TAB -->
+  <!-- LOGIN -->
   <div id="tab-login" class="tab-content active">
     <div class="login-box">
       <div class="card">
         <h2>🔐 Employee Login</h2>
         <div class="form-group">
           <label>Employee ID</label>
-          <input type="text" id="login-empid" placeholder="Enter your Employee ID">
+          <input type="text" id="login-empid" placeholder="Enter Employee ID">
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="login-password" placeholder="Enter your password">
+          <input type="password" id="login-password" placeholder="Enter Password">
         </div>
         <button class="btn btn-primary btn-full" onclick="employeeLogin()">Login</button>
         <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
@@ -140,7 +127,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     </div>
   </div>
 
-  <!-- SIGNUP TAB -->
+  <!-- SIGNUP -->
   <div id="tab-signup" class="tab-content">
     <div class="login-box">
       <div class="card">
@@ -158,7 +145,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
           <input type="text" id="signup-dept">
         </div>
         <div class="form-group">
-          <label>Mobile Number *</label>
+          <label>Mobile *</label>
           <input type="tel" id="signup-mobile">
         </div>
         <div class="form-group">
@@ -171,31 +158,20 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     </div>
   </div>
 
-  <!-- CALENDAR TAB -->
+  <!-- CALENDAR -->
   <div id="tab-calendar" class="tab-content">
     <div class="card">
       <h2>📅 Select Travel Date</h2>
-      <div class="calendar-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <button class="btn btn-outline" onclick="changeMonth(-1)">← Previous</button>
         <h3 id="calendar-month-year"></h3>
         <button class="btn btn-outline" onclick="changeMonth(1)">Next →</button>
       </div>
-      <div class="calendar-grid" id="calendar-grid"></div>
+      <div id="calendar-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;"></div>
     </div>
   </div>
 
-  <!-- SEAT SELECTION TAB -->
-  <div id="tab-seats" class="tab-content">
-    <div class="card">
-      <h2>💺 Select Your Seat</h2>
-      <p style="color:#64748b;margin-bottom:15px;">Selected Date: <strong id="selected-date-display"></strong></p>
-      <div id="seats-wrapper" style="text-align:center;padding:40px;color:#94a3b8;">
-        <p>Select a date first to see available seats</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- MY BOOKINGS TAB -->
+  <!-- MY BOOKINGS -->
   <div id="tab-bookings" class="tab-content">
     <div class="card">
       <h2>🎫 My Bookings</h2>
@@ -203,32 +179,28 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     </div>
   </div>
 
-  <!-- ADMIN: DASHBOARD -->
+  <!-- ADMIN DASHBOARD -->
   <div id="tab-admin-dashboard" class="tab-content">
     <div class="card">
-      <h2>📊 Dashboard Overview</h2>
+      <h2>📊 Dashboard</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
         <div style="background:linear-gradient(135deg,var(--brand),var(--brand-light));color:#fff;padding:20px;border-radius:10px;text-align:center;">
-          <div style="font-size:2rem;font-weight:bold;" id="stat-total-bookings">0</div>
+          <div style="font-size:2rem;font-weight:bold;" id="stat-bookings">0</div>
           <div>Total Bookings</div>
         </div>
         <div style="background:linear-gradient(135deg,var(--success),#34d399);color:#fff;padding:20px;border-radius:10px;text-align:center;">
-          <div style="font-size:2rem;font-weight:bold;" id="stat-available-seats">22</div>
-          <div>Available Seats</div>
-        </div>
-        <div style="background:linear-gradient(135deg,var(--warning),var(--gold-light));color:#fff;padding:20px;border-radius:10px;text-align:center;">
           <div style="font-size:2rem;font-weight:bold;" id="stat-trips">0</div>
           <div>Scheduled Trips</div>
         </div>
-        <div style="background:linear-gradient(135deg,var(--info),#60a5fa);color:#fff;padding:20px;border-radius:10px;text-align:center;">
+        <div style="background:linear-gradient(135deg,var(--danger),#f87171);color:#fff;padding:20px;border-radius:10px;text-align:center;">
           <div style="font-size:2rem;font-weight:bold;" id="stat-users">0</div>
-          <div>Registered Users</div>
+          <div>Users</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ADMIN: MANAGE CALENDAR -->
+  <!-- ADMIN CALENDAR -->
   <div id="tab-admin-calendar" class="tab-content">
     <div class="card">
       <h2>📅 Manage Bus Schedule</h2>
@@ -249,14 +221,14 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     </div>
   </div>
 
-  <!-- ADMIN: ALL BOOKINGS -->
+  <!-- ADMIN BOOKINGS -->
   <div id="tab-admin-bookings" class="tab-content">
     <div class="card">
       <h2>📋 All Bookings</h2>
       <div style="overflow-x:auto;">
         <table>
           <thead>
-            <tr><th>Employee</th><th>Department</th><th>Seat</th><th>Mobile</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Employee</th><th>Department</th><th>Seat</th><th>Mobile</th><th>Status</th></tr>
           </thead>
           <tbody id="admin-bookings-tbody"></tbody>
         </table>
@@ -264,10 +236,10 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     </div>
   </div>
 
-  <!-- ADMIN: SETTINGS -->
+  <!-- ADMIN SETTINGS -->
   <div id="tab-admin-settings" class="tab-content">
     <div class="card">
-      <h2>⚙️ Booking Settings</h2>
+      <h2>️ Settings</h2>
       <div class="form-group">
         <label>Booking Opens At</label>
         <input type="time" id="setting-open-time" value="10:00">
@@ -276,17 +248,17 @@ th{background:var(--brand);color:#fff;font-weight:600;}
         <label>Booking Closes At</label>
         <input type="time" id="setting-close-time" value="18:30">
       </div>
-      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Save</button>
     </div>
   </div>
 
-  <!-- ADMIN: BRANDING -->
+  <!-- ADMIN BRANDING -->
   <div id="tab-admin-branding" class="tab-content">
     <div class="card">
-      <h2>🎨 Customize Appearance</h2>
+      <h2> Branding</h2>
       
       <div class="form-group">
-        <label>Hotel/Company Name</label>
+        <label>Hotel Name</label>
         <input type="text" id="brand-hotel-name" placeholder="e.g., Six Senses Dunes">
       </div>
       
@@ -297,12 +269,22 @@ th{background:var(--brand);color:#fff;font-weight:600;}
       
       <div class="form-group">
         <label>Hotel Logo</label>
-        <div class="file-upload" id="logo-upload-container">
+        <div class="file-upload" id="logo-upload">
           <p style="font-size:2rem;">🏨</p>
           <p><strong>Click to upload logo</strong></p>
           <input type="file" id="brand-logo-file" accept="image/*">
         </div>
         <img id="brand-logo-preview" style="max-width:150px;margin-top:10px;border-radius:10px;display:none;">
+      </div>
+      
+      <div class="form-group">
+        <label>Background Image</label>
+        <div class="file-upload" id="bg-upload">
+          <p style="font-size:2rem;">🌄</p>
+          <p><strong>Click to upload background</strong></p>
+          <input type="file" id="brand-bg-file" accept="image/*">
+        </div>
+        <img id="brand-bg-preview" style="max-width:100%;margin-top:10px;border-radius:10px;display:none;">
       </div>
       
       <div class="form-group">
@@ -315,19 +297,8 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   </div>
 </div>
 
-<!-- Modal: Ticket View -->
-<div id="ticket-modal" class="modal">
-  <div class="modal-content" style="max-width:600px;">
-    <h2 style="color:var(--brand);margin-bottom:15px;"> Your Ticket</h2>
-    <div id="ticket-content"></div>
-    <button class="btn btn-primary btn-full" onclick="downloadTicketPDF()">📥 Download PDF</button>
-    <button class="btn btn-outline btn-full" onclick="closeModal('ticket-modal')" style="margin-top:10px;">Close</button>
-  </div>
-</div>
-
 <script>
-// ============ FIREBASE CONFIG ============
-// ⚠️ REPLACE THIS WITH YOUR ACTUAL FIREBASE CONFIG FROM FIREBASE CONSOLE
+// ============ ⚠️ REPLACE WITH YOUR FIREBASE CONFIG ============
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY_HERE",
   authDomain: "busbooking.firebaseapp.com",
@@ -339,121 +310,89 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-try {
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  console.log('✅ Firebase initialized successfully');
-} catch(error) {
-  console.error(' Firebase initialization error:', error);
-  alert('Firebase configuration error. Please check your Firebase config.');
-}
-
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ============ GLOBAL STATE ============
+// Global state
 let currentUser = null;
 let isAdmin = false;
-let selectedDate = null;
 let currentMonth = new Date();
 let bookings = [];
 let trips = [];
 let users = [];
-let settings = {openTime: '10:00', closeTime: '18:30', totalSeats: 22};
 let tempLogo = null;
-let currentTicket = null;
+let tempBg = null;
 
-// ============ INIT ============
+// Load data on startup
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 App loading...');
-  loadData();
-  setupFileUploads();
+  console.log('✅ App loaded');
+  
+  // Setup file uploads
+  document.getElementById('logo-upload').onclick = () => document.getElementById('brand-logo-file').click();
+  document.getElementById('bg-upload').onclick = () => document.getElementById('brand-bg-file').click();
+  
+  document.getElementById('brand-logo-file').onchange = handleLogoUpload;
+  document.getElementById('brand-bg-file').onchange = handleBgUpload;
+  
+  // Load data from Firebase
+  loadAllData();
 });
 
-function setupFileUploads() {
-  const logoContainer = document.getElementById('logo-upload-container');
-  const logoFile = document.getElementById('brand-logo-file');
-  
-  if(logoContainer && logoFile) {
-    logoContainer.onclick = () => logoFile.click();
-    logoFile.onchange = handleLogoUpload;
-  }
-}
-
-function loadData() {
-  console.log('📡 Loading data from Firebase...');
-  
+function loadAllData() {
   // Load trips
   db.ref('bus/trips').on('value', snap => {
-    const data = snap.val();
-    trips = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+    trips = snap.val() ? Object.values(snap.val()) : [];
     console.log('📅 Loaded trips:', trips.length);
     if(isAdmin) renderAdminTrips();
     renderCalendar();
     updateStats();
-  }, error => {
-    console.error('❌ Error loading trips:', error);
-    showAlert('Error loading trips: ' + error.message, 'error');
   });
   
   // Load bookings
   db.ref('bus/bookings').on('value', snap => {
-    const data = snap.val();
-    bookings = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
-    console.log(' Loaded bookings:', bookings.length);
+    bookings = snap.val() ? Object.values(snap.val()) : [];
+    console.log('🎫 Loaded bookings:', bookings.length);
     if(currentUser) renderMyBookings();
     if(isAdmin) loadAdminBookings();
     updateStats();
-  }, error => {
-    console.error('❌ Error loading bookings:', error);
   });
   
   // Load users
   db.ref('bus/users').on('value', snap => {
-    const data = snap.val();
-    users = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+    users = snap.val() ? Object.values(snap.val()) : [];
     console.log('👥 Loaded users:', users.length);
     updateStats();
-  }, error => {
-    console.error(' Error loading users:', error);
-  });
-  
-  // Load settings
-  db.ref('bus/settings').on('value', snap => {
-    const s = snap.val();
-    if(s){
-      settings = {...settings, ...s};
-      document.getElementById('setting-open-time').value = s.openTime || '10:00';
-      document.getElementById('setting-close-time').value = s.closeTime || '18:30';
-    }
-  }, error => {
-    console.error('❌ Error loading settings:', error);
   });
   
   // Load branding
   db.ref('bus/branding').on('value', snap => {
     const d = snap.val();
     if(d){
-      console.log('🎨 Loaded branding:', d);
-      if(d.hotelName){
+      console.log('🎨 Loaded branding');
+      if(d.hotelName) {
         document.getElementById('app-hotel-name').innerText = d.hotelName;
         document.getElementById('brand-hotel-name').value = d.hotelName;
       }
-      if(d.tagline){
+      if(d.tagline) {
         document.getElementById('app-tagline').innerText = d.tagline;
         document.getElementById('brand-tagline').value = d.tagline;
       }
-      if(d.logo){
+      if(d.logo) {
         document.getElementById('app-logo').innerHTML = `<img src="${d.logo}">`;
         document.getElementById('brand-logo-preview').src = d.logo;
         document.getElementById('brand-logo-preview').style.display = 'block';
       }
-      if(d.color){
+      if(d.background) {
+        document.body.style.backgroundImage = `url(${d.background})`;
+        document.body.classList.add('has-bg');
+        document.getElementById('brand-bg-preview').src = d.background;
+        document.getElementById('brand-bg-preview').style.display = 'block';
+      }
+      if(d.color) {
         document.documentElement.style.setProperty('--brand', d.color);
         document.getElementById('brand-color').value = d.color;
       }
     }
-  }, error => {
-    console.error('❌ Error loading branding:', error);
   });
 }
 
@@ -466,29 +405,42 @@ function handleLogoUpload(e) {
     tempLogo = event.target.result;
     document.getElementById('brand-logo-preview').src = tempLogo;
     document.getElementById('brand-logo-preview').style.display = 'block';
-    showAlert('Logo uploaded! Click Save Branding to apply.', 'success');
+    showAlert('Logo uploaded! Click Save to apply.', 'success');
   };
   reader.readAsDataURL(file);
 }
 
-function switchTab(tab, btn) {
+function handleBgUpload(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    tempBg = event.target.result;
+    document.getElementById('brand-bg-preview').src = tempBg;
+    document.getElementById('brand-bg-preview').style.display = 'block';
+    showAlert('Background uploaded! Click Save to apply.', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function switchTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  if(btn) btn.classList.add('active');
+  document.getElementById('tab-' + tabName).classList.add('active');
   
-  if(tab === 'calendar') renderCalendar();
-  if(tab === 'bookings' && currentUser) renderMyBookings();
-  if(tab === 'admin-dashboard') updateStats();
-  if(tab === 'admin-calendar') renderAdminTrips();
-  if(tab === 'admin-bookings') loadAdminBookings();
+  if(tabName === 'calendar') renderCalendar();
+  if(tabName === 'bookings' && currentUser) renderMyBookings();
+  if(tabName === 'admin-dashboard') updateStats();
+  if(tabName === 'admin-calendar') renderAdminTrips();
+  if(tabName === 'admin-bookings') loadAdminBookings();
 }
 
 function showLogin() {
-  if(isAdmin) logoutAdmin();
+  isAdmin = false;
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-login').classList.add('active');
-  updateNavVisibility();
+  updateNav();
 }
 
 function showSignup() {
@@ -496,22 +448,21 @@ function showSignup() {
   document.getElementById('tab-signup').classList.add('active');
 }
 
-function updateNavVisibility() {
+function updateNav() {
   const isLoggedIn = currentUser !== null;
-  const isAdminMode = isAdmin;
   
-  ['nav-calendar','nav-seats','nav-bookings','nav-admin-dashboard','nav-admin-calendar','nav-admin-bookings','nav-admin-settings','nav-admin-branding','nav-login','user-info'].forEach(id => {
+  ['nav-calendar','nav-bookings','nav-admin-dashboard','nav-admin-calendar','nav-admin-bookings','nav-admin-settings','nav-admin-branding','nav-login','user-info'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
   
-  if(isAdminMode) {
+  if(isAdmin) {
     ['nav-admin-dashboard','nav-admin-calendar','nav-admin-bookings','nav-admin-settings','nav-admin-branding'].forEach(id => {
       document.getElementById(id).classList.remove('hidden');
     });
     document.getElementById('nav-login').classList.remove('hidden');
     document.getElementById('nav-login').innerText = '👤 Employee Login';
   } else if(isLoggedIn) {
-    ['nav-calendar','nav-seats','nav-bookings'].forEach(id => {
+    ['nav-calendar','nav-bookings'].forEach(id => {
       document.getElementById(id).classList.remove('hidden');
     });
     document.getElementById('user-info').classList.remove('hidden');
@@ -526,20 +477,17 @@ function employeeLogin() {
   const empId = document.getElementById('login-empid').value.trim();
   const password = document.getElementById('login-password').value;
   
-  console.log('🔐 Login attempt:', {empId, password: '***'});
+  console.log('🔐 Login attempt:', empId);
   
   if(!empId || !password) {
     showAlert('Please fill all fields', 'error');
     return;
   }
-
+  
   db.ref('bus/users').orderByChild('employeeId').equalTo(empId).once('value', snap => {
-    console.log(' Query result:', snap.val());
-    
     let found = null;
     snap.forEach(child => {
       const data = child.val();
-      console.log('Checking user:', data);
       if(data.password === btoa(password)) {
         found = {id: child.key, ...data};
       }
@@ -548,16 +496,14 @@ function employeeLogin() {
     if(found) {
       currentUser = found;
       isAdmin = false;
-      console.log('✅ Login successful:', currentUser);
+      console.log('✅ Login successful');
       showAlert('Login successful!', 'success');
-      onLoginSuccess();
+      updateNav();
+      switchTab('calendar');
     } else {
-      console.log('❌ Login failed - invalid credentials');
+      console.log('❌ Login failed');
       showAlert('Invalid Employee ID or Password', 'error');
     }
-  }, error => {
-    console.error('❌ Login error:', error);
-    showAlert('Login error: ' + error.message, 'error');
   });
 }
 
@@ -567,58 +513,34 @@ function employeeSignup() {
   const dept = document.getElementById('signup-dept').value.trim();
   const mobile = document.getElementById('signup-mobile').value.trim();
   const password = document.getElementById('signup-password').value;
-
+  
   if(!empId || !name || !dept || !mobile || !password) {
     showAlert('Please fill all fields', 'error');
     return;
   }
-  if(password.length < 6) {
-    showAlert('Password must be at least 6 characters', 'error');
-    return;
-  }
-
-  db.ref('bus/users').orderByChild('employeeId').equalTo(empId).once('value', snap => {
-    if(snap.exists()){
-      showAlert('Employee ID already registered', 'error');
-      return;
-    }
-    
-    const newUser = {
-      employeeId: empId,
-      name: name,
-      department: dept,
-      mobile: mobile,
-      password: btoa(password),
-      createdAt: Date.now()
-    };
-    
-    db.ref('bus/users').push(newUser).then(() => {
-      showAlert('Account created successfully! Please login.', 'success');
-      showLogin();
-    }).catch(err => {
-      showAlert('Error: ' + err.message, 'error');
-    });
+  
+  const newUser = {
+    employeeId: empId,
+    name: name,
+    department: dept,
+    mobile: mobile,
+    password: btoa(password),
+    createdAt: Date.now()
+  };
+  
+  db.ref('bus/users').push(newUser).then(() => {
+    showAlert('Account created! Please login.', 'success');
+    showLogin();
+  }).catch(err => {
+    showAlert('Error: ' + err.message, 'error');
   });
-}
-
-function onLoginSuccess() {
-  updateNavVisibility();
-  if(!isAdmin) {
-    switchTab('calendar', document.getElementById('nav-calendar'));
-  }
 }
 
 function logout() {
   currentUser = null;
   isAdmin = false;
-  updateNavVisibility();
+  updateNav();
   showLogin();
-  ['login-empid','login-password'].forEach(id => document.getElementById(id).value = '');
-}
-
-function logoutAdmin() {
-  isAdmin = false;
-  updateNavVisibility();
 }
 
 function showAdminLogin() {
@@ -626,15 +548,11 @@ function showAdminLogin() {
   if(password === 'Admin@2026') {
     isAdmin = true;
     currentUser = null;
-    updateNavVisibility();
-    switchTab('admin-dashboard', document.getElementById('nav-admin-dashboard'));
+    updateNav();
+    switchTab('admin-dashboard');
   } else if(password) {
     showAlert('Invalid password!', 'error');
   }
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
 }
 
 function saveBranding() {
@@ -645,15 +563,13 @@ function saveBranding() {
   };
   
   if(tempLogo) branding.logo = tempLogo;
-  
-  console.log('💾 Saving branding:', branding);
+  if(tempBg) branding.background = tempBg;
   
   db.ref('bus/branding').set(branding).then(() => {
-    console.log('✅ Branding saved');
-    showAlert('Branding saved successfully!', 'success');
+    showAlert('Branding saved!', 'success');
     tempLogo = null;
+    tempBg = null;
   }).catch(err => {
-    console.error('❌ Error saving branding:', err);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -664,9 +580,6 @@ function renderCalendar() {
   
   document.getElementById('calendar-month-year').innerText = 
     currentMonth.toLocaleString('default', {month: 'long', year: 'numeric'});
-  
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
   
   const grid = document.getElementById('calendar-grid');
   grid.innerHTML = '';
@@ -679,9 +592,11 @@ function renderCalendar() {
     grid.appendChild(div);
   });
   
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
   for(let i = 0; i < firstDay; i++) {
-    const div = document.createElement('div');
-    grid.appendChild(div);
+    grid.appendChild(document.createElement('div'));
   }
   
   const today = new Date().toISOString().split('T')[0];
@@ -692,21 +607,20 @@ function renderCalendar() {
     const isPast = new Date(dateStr) < new Date(today);
     
     const div = document.createElement('div');
-    div.className = 'calendar-day';
-    div.style.cssText = 'background:#f8fafc;padding:15px 10px;border-radius:8px;text-align:center;cursor:pointer;min-height:80px;';
+    div.style.cssText = 'background:#f8fafc;padding:15px 10px;border-radius:8px;text-align:center;min-height:80px;';
     
     if(isPast || !trip) {
       div.style.opacity = '0.4';
-      div.style.cursor = 'not-allowed';
     } else {
+      div.style.cursor = 'pointer';
+      div.style.borderColor = 'var(--success)';
+      div.style.background = '#d1fae5';
       div.onclick = () => selectDate(dateStr);
     }
     
     if(trip) {
-      div.style.borderColor = 'var(--success)';
-      div.style.background = '#d1fae5';
       const bookingCount = bookings.filter(b => b.tripDate === dateStr && b.status === 'confirmed').length;
-      const status = bookingCount >= settings.totalSeats ? 'Full' : 'Available';
+      const status = bookingCount >= 22 ? 'Full' : 'Available';
       div.innerHTML = `
         <div style="font-size:0.8rem;color:#64748b;">${dayNames[new Date(dateStr).getDay()]}</div>
         <div style="font-size:1.5rem;font-weight:bold;color:var(--brand);">${day}</div>
@@ -731,25 +645,12 @@ function changeMonth(delta) {
 }
 
 function selectDate(dateStr) {
-  const trip = trips.find(t => t.date === dateStr);
-  if(!trip) {
-    showAlert('No bus scheduled for this date', 'error');
-    return;
-  }
-  
-  selectedDate = dateStr;
-  document.getElementById('selected-date-display').innerText = new Date(dateStr).toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  });
-  
   showAlert('Date selected: ' + dateStr, 'success');
-  // In a full implementation, this would show seat selection
+  // In full version, this would show seat selection
 }
 
 function updateStats() {
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
-  
-  document.getElementById('stat-total-bookings').innerText = confirmedBookings;
+  document.getElementById('stat-bookings').innerText = bookings.filter(b => b.status === 'confirmed').length;
   document.getElementById('stat-trips').innerText = trips.length;
   document.getElementById('stat-users').innerText = users.length;
 }
@@ -766,56 +667,51 @@ function addTrip() {
   }
   
   if(trips.find(t => t.date === date)) {
-    showAlert('Trip already exists for this date', 'error');
+    showAlert('Trip already exists', 'error');
     return;
   }
   
-  const newTrip = {
+  db.ref('bus/trips').push({
     date: date,
     time: time,
     createdAt: Date.now()
-  };
-  
-  db.ref('bus/trips').push(newTrip).then(() => {
-    console.log('✅ Trip added successfully');
+  }).then(() => {
+    console.log('✅ Trip added');
     showAlert('Trip added successfully!', 'success');
     document.getElementById('trip-date').value = '';
   }).catch(err => {
-    console.error(' Error adding trip:', err);
+    console.error('❌ Error:', err);
     showAlert('Error: ' + err.message, 'error');
   });
 }
 
 function renderAdminTrips() {
   const container = document.getElementById('admin-trips-list');
-  const sortedTrips = [...trips].sort((a,b) => new Date(a.date) - new Date(b.date));
   
-  if(sortedTrips.length === 0) {
+  if(trips.length === 0) {
     container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">No trips scheduled</p>';
     return;
   }
   
-  container.innerHTML = sortedTrips.map(t => {
-    const bookingCount = bookings.filter(b => b.tripDate === t.date && b.status === 'confirmed').length;
+  container.innerHTML = trips.sort((a,b) => new Date(a.date) - new Date(b.date)).map(t => {
+    const count = bookings.filter(b => b.tripDate === t.date && b.status === 'confirmed').length;
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:15px;background:#f8fafc;border-radius:8px;margin-bottom:10px;">
         <div>
           <strong>${new Date(t.date).toLocaleDateString()}</strong>
-          <div style="color:#64748b;font-size:0.9rem;">Departure: ${t.time} • ${bookingCount}/${settings.totalSeats} seats booked</div>
+          <div style="color:#64748b;font-size:0.9rem;">${t.time} • ${count}/22 seats</div>
         </div>
-        <button class="btn btn-danger btn-sm" onclick="deleteTrip('${t.id}')">🗑️ Delete</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTrip('${t.id}')">️ Delete</button>
       </div>
     `;
   }).join('');
 }
 
 function deleteTrip(tripId) {
-  if(!confirm('Delete this trip? All bookings will be cancelled.')) return;
+  if(!confirm('Delete this trip?')) return;
   
   db.ref('bus/trips/' + tripId).remove().then(() => {
     showAlert('Trip deleted', 'success');
-  }).catch(err => {
-    showAlert('Error: ' + err.message, 'error');
   });
 }
 
@@ -823,7 +719,7 @@ function loadAdminBookings() {
   const tbody = document.getElementById('admin-bookings-tbody');
   
   if(bookings.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No bookings found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No bookings</td></tr>';
     return;
   }
   
@@ -833,73 +729,32 @@ function loadAdminBookings() {
       <td>${b.department || 'N/A'}</td>
       <td>${b.seatNumber || 'N/A'}</td>
       <td>${b.mobile || 'N/A'}</td>
-      <td><span style="padding:4px 10px;background:${b.status === 'confirmed' ? '#d1fae5' : '#fee2e2'};color:${b.status === 'confirmed' ? '#065f46' : '#991b1b'};border-radius:12px;font-size:0.85rem;">${b.status}</span></td>
-      <td><button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">🎫</button></td>
+      <td><span style="padding:4px 10px;background:${b.status === 'confirmed' ? '#d1fae5' : '#fee2e2'};color:${b.status === 'confirmed' ? '#065f46' : '#991b1b'};border-radius:12px;">${b.status}</span></td>
     </tr>
   `).join('');
 }
 
-function viewTicket(bookingId) {
-  const booking = bookings.find(b => b.id === bookingId);
-  if(!booking) return;
+function renderMyBookings() {
+  if(!currentUser) return;
   
-  currentTicket = booking;
-  const html = `
-    <div style="border:3px dashed var(--brand);border-radius:12px;padding:25px;margin:20px 0;">
-      <div style="text-align:center;padding-bottom:15px;border-bottom:2px solid var(--border);margin-bottom:20px;">
-        <h2>${document.getElementById('app-hotel-name').innerText}</h2>
-        <p style="color:#64748b;">Bus Ticket - Umluj Shopping Trip</p>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;">
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Passenger Name</label><div style="font-weight:bold;">${booking.name}</div></div>
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Employee ID</label><div style="font-weight:bold;">${booking.employeeId}</div></div>
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Department</label><div style="font-weight:bold;">${booking.department}</div></div>
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Mobile</label><div style="font-weight:bold;">${booking.mobile}</div></div>
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Travel Date</label><div style="font-weight:bold;">${new Date(booking.tripDate).toLocaleDateString()}</div></div>
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Seat Number</label><div style="font-weight:bold;">${booking.seatNumber}</div></div>
+  const myBookings = bookings.filter(b => b.userId === currentUser.id);
+  const container = document.getElementById('my-bookings-list');
+  
+  if(myBookings.length === 0) {
+    container.innerHTML = '<p style="text-align:center;padding:30px;color:#94a3b8;">No bookings yet.</p>';
+    return;
+  }
+  
+  container.innerHTML = myBookings.map(b => `
+    <div class="card" style="margin-bottom:15px;">
+      <h3> Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'}</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px;">
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Travel Date</label><div style="font-weight:bold;">${new Date(b.tripDate).toLocaleDateString()}</div></div>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Seat</label><div style="font-weight:bold;">${b.seatNumber}</div></div>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Status</label><div style="font-weight:bold;color:${b.status === 'confirmed' ? 'var(--success)' : 'var(--danger)'};">${b.status}</div></div>
       </div>
     </div>
-  `;
-  
-  document.getElementById('ticket-content').innerHTML = html;
-  document.getElementById('ticket-modal').classList.add('active');
-}
-
-function downloadTicketPDF() {
-  if(!currentTicket) return;
-  
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    doc.setFontSize(20);
-    doc.text(document.getElementById('app-hotel-name').innerText, 105, 20, {align: 'center'});
-    doc.setFontSize(14);
-    doc.text('Bus Ticket - Umluj Shopping Trip', 105, 30, {align: 'center'});
-    
-    let y = 50;
-    const details = [
-      ['Passenger Name:', currentTicket.name],
-      ['Employee ID:', currentTicket.employeeId],
-      ['Department:', currentTicket.department],
-      ['Mobile:', currentTicket.mobile],
-      ['Travel Date:', new Date(currentTicket.tripDate).toLocaleDateString()],
-      ['Seat Number:', currentTicket.seatNumber.toString()]
-    ];
-    
-    details.forEach(([label, value]) => {
-      doc.setFont(undefined, 'bold');
-      doc.text(label, 20, y);
-      doc.setFont(undefined, 'normal');
-      doc.text(String(value), 80, y);
-      y += 10;
-    });
-    
-    doc.save(`Ticket_${currentTicket.id ? currentTicket.id.slice(-6) : 'booking'}.pdf`);
-    showAlert('Ticket downloaded!', 'success');
-  } catch(err) {
-    showAlert('Error: ' + err.message, 'error');
-  }
+  `).join('');
 }
 
 function saveSettings() {
@@ -910,35 +765,7 @@ function saveSettings() {
   
   db.ref('bus/settings').set(updates).then(() => {
     showAlert('Settings saved', 'success');
-    settings = {...settings, ...updates};
-  }).catch(err => {
-    showAlert('Error: ' + err.message, 'error');
   });
-}
-
-function renderMyBookings() {
-  if(!currentUser) return;
-  
-  const myBookings = bookings.filter(b => b.userId === currentUser.id).sort((a,b) => b.bookedAt - a.bookedAt);
-  const container = document.getElementById('my-bookings-list');
-  
-  if(myBookings.length === 0) {
-    container.innerHTML = '<p style="text-align:center;padding:30px;color:#94a3b8;">No bookings yet.</p>';
-    return;
-  }
-  
-  container.innerHTML = myBookings.map(b => `
-    <div class="card" style="margin-bottom:15px;">
-      <h3>🎫 Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'}</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px;">
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Travel Date</label><div style="font-weight:bold;">${new Date(b.tripDate).toLocaleDateString()}</div></div>
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Departure Time</label><div style="font-weight:bold;">${b.tripTime || '10:00'}</div></div>
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Seat Number</label><div style="font-weight:bold;">${b.seatNumber}</div></div>
-        <div style="background:#f8fafc;padding:12px;border-radius:8px;"><label style="font-size:0.8rem;color:#64748b;">Status</label><div style="font-weight:bold;color:${b.status === 'confirmed' ? 'var(--success)' : 'var(--danger)'};">${b.status === 'confirmed' ? '✅ Confirmed' : '❌ Cancelled'}</div></div>
-      </div>
-      <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')" style="margin-top:15px;">🎫 View Ticket</button>
-    </div>
-  `).join('');
 }
 
 function showAlert(msg, type) {
