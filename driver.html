@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Driver Portal - Bus Booking Verification</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{--brand:#0f766e;--brand-light:#14b8a6;--brand-dark:#0d5c56;--bg:#f0fdfa;--card:#fff;--text:#1e293b;--border:#e2e8f0;--success:#10b981;--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.header{background:linear-gradient(135deg,var(--brand-dark),var(--brand));color:#fff;padding:20px;box-shadow:0 4px 20px rgba(15,118,110,0.3);}
+.header-content{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.logo-circle{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;}
+.logo-circle img{width:100%;height:100%;object-fit:cover;}
+.header-info h1{font-size:1.8rem;margin-bottom:5px;}
+.header-info p{opacity:0.9;font-size:1rem;}
+.navbar{background:#fff;padding:12px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);}
+.nav-content{max-width:1200px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.nav-btn{background:transparent;color:var(--brand);border:2px solid var(--brand);padding:8px 18px;border-radius:20px;cursor:pointer;font-weight:600;transition:all 0.3s;font-size:0.9rem;}
+.nav-btn:hover,.nav-btn.active{background:var(--brand);color:#fff;}
+.nav-btn.hidden{display:none !important;}
+.user-info{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--brand);font-weight:600;}
+.container{max-width:1200px;margin:30px auto;padding:0 20px;}
+.card{background:var(--card);border-radius:12px;padding:25px;box-shadow:0 4px 15px rgba(0,0,0,0.06);margin-bottom:20px;border:1px solid var(--border);}
+.card h2{color:var(--brand);margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid var(--brand-light);font-size:1.4rem;}
+.form-group{margin-bottom:15px;}
+label{display:block;margin-bottom:6px;font-weight:600;color:#475569;font-size:0.9rem;}
+input,select{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:1rem;background:#fff;}
+input:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,118,110,0.1);}
+.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95rem;transition:all 0.3s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-warning{background:var(--warning);color:#fff;}
+.btn-outline{background:transparent;border:2px solid var(--brand);color:var(--brand);}
+.btn-full{width:100%;justify-content:center;margin-top:15px;padding:12px;}
+.btn-sm{padding:6px 12px;font-size:0.85rem;}
+.tab-content{display:none;animation:fadeIn 0.4s;}
+.tab-content.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.alert{padding:12px 18px;border-radius:8px;margin-bottom:15px;display:none;font-weight:500;}
+.alert-success{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
+.alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.alert-warning{background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+.alert-info{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;}
+.login-box{max-width:450px;margin:60px auto;}
+.login-box .card{text-align:center;}
+.scanner-container{max-width:500px;margin:0 auto;background:#000;border-radius:12px;overflow:hidden;}
+#qr-reader{width:100%;}
+#qr-reader video{width:100%;border-radius:12px;}
+.verification-result{padding:20px;border-radius:12px;margin-top:20px;text-align:center;}
+.verification-result.valid{background:#d1fae5;border:2px solid var(--success);}
+.verification-result.invalid{background:#fee2e2;border:2px solid var(--danger);}
+.verification-result.warning{background:#fef3c7;border:2px solid var(--warning);}
+.verification-result h3{font-size:1.5rem;margin-bottom:10px;}
+.verification-details{background:#fff;padding:15px;border-radius:8px;margin-top:15px;text-align:left;}
+.verification-details div{padding:8px 0;border-bottom:1px solid var(--border);}
+.verification-details div:last-child{border-bottom:none;}
+.verification-details strong{color:var(--brand);}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px;}
+.stat-card{background:linear-gradient(135deg,var(--brand),var(--brand-light));color:#fff;padding:20px;border-radius:10px;text-align:center;}
+.stat-card .number{font-size:2rem;font-weight:bold;}
+.stat-card .label{font-size:0.9rem;opacity:0.95;}
+.passenger-list{max-height:500px;overflow-y:auto;}
+.passenger-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:4px solid var(--brand);}
+.passenger-item.boarded{border-left-color:var(--success);background:#d1fae5;}
+.passenger-item.cancelled{border-left-color:var(--danger);background:#fee2e2;}
+.passenger-info{flex:1;}
+.passenger-info strong{display:block;color:var(--text);}
+.passenger-info small{color:#64748b;font-size:0.85rem;}
+.status-badge{padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;display:inline-block;}
+.status-booked{background:#d1fae5;color:#065f46;}
+.status-cancelled{background:#fee2e2;color:#991b1b;}
+.status-boarded{background:#dbeafe;color:#1e40af;}
+.status-expired{background:#e5e7eb;color:#374151;}
+table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;border-radius:8px;overflow:hidden;}
+th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border);}
+th{background:var(--brand);color:#fff;font-weight:600;}
+@media(max-width:768px){.header-content{flex-direction:column;text-align:center;}.nav-content{flex-direction:column;}.nav-btn{width:100%;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-content">
+    <div class="logo-circle" id="app-logo">🚌</div>
+    <div class="header-info">
+      <h1 id="app-hotel-name">Driver Portal</h1>
+      <p id="app-tagline">Ticket Verification & Boarding</p>
+    </div>
+  </div>
+</div>
+
+<div class="navbar">
+  <div class="nav-content">
+    <button class="nav-btn hidden" id="nav-scanner" onclick="switchTab('scanner')">📱 QR Scanner</button>
+    <button class="nav-btn hidden" id="nav-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="nav-btn hidden" id="nav-passengers" onclick="switchTab('passengers')">👥 Passenger List</button>
+    <button class="nav-btn" id="nav-login" onclick="showLogin()">🔐 Driver Login</button>
+    <div class="user-info hidden" id="user-info">
+      <span id="user-name-display">👤 Driver</span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="alert-success" class="alert alert-success"></div>
+  <div id="alert-error" class="alert alert-error"></div>
+  <div id="alert-warning" class="alert alert-warning"></div>
+  <div id="alert-info" class="alert alert-info"></div>
+
+  <!-- DRIVER LOGIN -->
+  <div id="tab-login" class="tab-content active">
+    <div class="login-box">
+      <div class="card">
+        <h2>🔐 Driver Login</h2>
+        <div class="form-group"><label>Driver ID</label><input type="text" id="login-driverid" placeholder="Enter Driver ID"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Enter Password"></div>
+        <button class="btn btn-primary btn-full" onclick="driverLogin()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR SCANNER -->
+  <div id="tab-scanner" class="tab-content">
+    <div class="card">
+      <h2>📱 QR Code Scanner</h2>
+      <p style="color:#64748b;margin-bottom:20px;">Point camera at passenger's ticket QR code</p>
+      
+      <div class="scanner-container">
+        <div id="qr-reader"></div>
+      </div>
+      
+      <div style="margin-top:20px;text-align:center;">
+        <button class="btn btn-primary" onclick="startScanner()">📷 Start Scanner</button>
+        <button class="btn btn-danger" onclick="stopScanner()" style="margin-left:10px;">⏹️ Stop Scanner</button>
+      </div>
+      
+      <div id="verification-result"></div>
+    </div>
+  </div>
+
+  <!-- DRIVER DASHBOARD -->
+  <div id="tab-dashboard" class="tab-content">
+    <div class="card">
+      <h2>📊 Trip Dashboard</h2>
+      <div class="form-group">
+        <label>Select Trip Date</label>
+        <select id="dashboard-trip" onchange="loadDashboard()">
+          <option value="">Select a trip</option>
+        </select>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="number" id="stat-total">0</div>
+          <div class="label">Total Booked</div>
+        </div>
+        <div class="stat-card" style="background:linear-gradient(135deg,var(--success),#34d399);">
+          <div class="number" id="stat-boarded">0</div>
+          <div class="label">Boarded</div>
+        </div>
+        <div class="stat-card" style="background:linear-gradient(135deg,var(--warning),var(--gold-light));">
+          <div class="number" id="stat-remaining">0</div>
+          <div class="label">Remaining</div>
+        </div>
+        <div class="stat-card" style="background:linear-gradient(135deg,var(--danger),#f87171);">
+          <div class="number" id="stat-cancelled">0</div>
+          <div class="label">Cancelled</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSENGER LIST -->
+  <div id="tab-passengers" class="tab-content">
+    <div class="card">
+      <h2>👥 Passenger List</h2>
+      <div class="form-group">
+        <label>Select Trip Date</label>
+        <select id="passenger-trip" onchange="loadPassengerList()">
+          <option value="">Select a trip</option>
+        </select>
+      </div>
+      
+      <div class="passenger-list" id="passenger-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 🔴 REPLACE WITH YOUR ACTUAL FIREBASE CONFIG (Same as main system)
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAgU15_P_cmqYW0jePaaT5RqWAyOpAdYYk",
+  authDomain: "busbooking-b5662.firebaseapp.com",
+  databaseURL: "https://busbooking-b5662-default-rtdb.firebaseio.com",
+  projectId: "busbooking-b5662",
+  storageBucket: "busbooking-b5662.firebasestorage.app",
+  messagingSenderId: "829369142403",
+  appId: "1:829369142403:web:a5891f33a3efe71cf65fb6",
+  measurementId: "G-YKPY31X3S3"
+};
+
+try {
+  firebase.initializeApp(firebaseConfig);
+} catch(error) {
+  console.error('Firebase init error:', error);
+  alert('Firebase configuration error.');
+}
+
+const db = firebase.database();
+
+let currentDriver = null;
+let trips = [];
+let bookings = [];
+let html5QrCode = null;
+let isScannerRunning = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadAllData();
+});
+
+function loadAllData() {
+  db.ref('bus/trips').on('value', snap => {
+    const data = snap.val();
+    trips = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+    populateTripDropdowns();
+  });
+  
+  db.ref('bus/bookings').on('value', snap => {
+    const data = snap.val();
+    bookings = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+  });
+  
+  db.ref('bus/branding').on('value', snap => {
+    const d = snap.val();
+    if(!d) return;
+    if(d.hotelName) document.getElementById('app-hotel-name').innerText = d.hotelName + ' - Driver Portal';
+    if(d.logo) document.getElementById('app-logo').innerHTML = `<img src="${d.logo}">`;
+  });
+}
+
+function populateTripDropdowns() {
+  const dashboardSelect = document.getElementById('dashboard-trip');
+  const passengerSelect = document.getElementById('passenger-trip');
+  
+  const options = trips.sort((a,b) => a.date.localeCompare(b.date)).map(t => 
+    `<option value="${t.date}">${formatDateDisplay(t.date)} - ${t.time}</option>`
+  ).join('');
+  
+  if(dashboardSelect) dashboardSelect.innerHTML = '<option value="">Select a trip</option>' + options;
+  if(passengerSelect) passengerSelect.innerHTML = '<option value="">Select a trip</option>' + options;
+}
+
+function formatDateDisplay(dateStr) {
+  if(!dateStr) return 'N/A';
+  const [year, month, day] = dateStr.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  
+  if(tabName === 'dashboard') loadDashboard();
+  if(tabName === 'passengers') loadPassengerList();
+}
+
+function showLogin() {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-login').classList.add('active');
+  updateNav();
+}
+
+function updateNav() {
+  const isLoggedIn = currentDriver !== null;
+  
+  ['nav-scanner','nav-dashboard','nav-passengers','nav-login','user-info'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
+  
+  if(isLoggedIn) {
+    ['nav-scanner','nav-dashboard','nav-passengers'].forEach(id => {
+      document.getElementById(id).classList.remove('hidden');
+    });
+    document.getElementById('user-info').classList.remove('hidden');
+    document.getElementById('user-name-display').innerText = '👤 ' + currentDriver.name;
+  } else {
+    document.getElementById('nav-login').classList.remove('hidden');
+  }
+}
+
+function driverLogin() {
+  const driverId = document.getElementById('login-driverid').value.trim();
+  const password = document.getElementById('login-password').value;
+  
+  if(!driverId || !password) {
+    showAlert('Please fill all fields', 'error');
+    return;
+  }
+  
+  // Default driver credentials (you can change these)
+  if(driverId === 'DRIVER001' && password === 'Driver@2026') {
+    currentDriver = {
+      id: 'driver-001',
+      driverId: driverId,
+      name: 'Bus Driver'
+    };
+    showAlert('Login successful!', 'success');
+    updateNav();
+    switchTab('scanner');
+  } else {
+    showAlert('Invalid Driver ID or Password', 'error');
+  }
+}
+
+function logout() {
+  currentDriver = null;
+  stopScanner();
+  updateNav();
+  showLogin();
+  ['login-driverid','login-password'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ============ QR SCANNER ============
+function startScanner() {
+  if(isScannerRunning) return;
+  
+  const qrReader = document.getElementById('qr-reader');
+  qrReader.innerHTML = '';
+  
+  html5QrCode = new Html5Qrcode("qr-reader");
+  
+  html5QrCode.start(
+    { facingMode: "environment" },
+    {
+      fps: 10,
+      qrbox: { width: 250, height: 250 }
+    },
+    onScanSuccess,
+    onScanFailure
+  ).then(() => {
+    isScannerRunning = true;
+    showAlert('Scanner started. Point camera at QR code.', 'info');
+  }).catch(err => {
+    showAlert('Error starting scanner: ' + err, 'error');
+  });
+}
+
+function stopScanner() {
+  if(html5QrCode && isScannerRunning) {
+    html5QrCode.stop().then(() => {
+      isScannerRunning = false;
+      html5QrCode.clear();
+    }).catch(err => {
+      console.error('Error stopping scanner:', err);
+    });
+  }
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+  // Stop scanner after successful scan
+  stopScanner();
+  
+  // Parse QR code data
+  let qrData;
+  try {
+    qrData = JSON.parse(decodedText);
+  } catch(e) {
+    showVerificationResult('invalid', 'Invalid QR Code', 'The QR code format is not recognized.');
+    return;
+  }
+  
+  // Validate against database
+  validateTicket(qrData);
+}
+
+function onScanFailure(error) {
+  // Scan failed, continue scanning
+  console.warn('Scan failed:', error);
+}
+
+function validateTicket(qrData) {
+  if(!qrData.token || !qrData.bookingId) {
+    showVerificationResult('invalid', 'Invalid QR Code', 'Missing security token.');
+    return;
+  }
+  
+  // Find booking in database
+  const booking = bookings.find(b => b.id === qrData.bookingId && b.secureToken === qrData.token);
+  
+  if(!booking) {
+    showVerificationResult('invalid', ' INVALID TICKET', 'Booking not found or security token mismatch. This may be a fake ticket.');
+    return;
+  }
+  
+  // Check booking status
+  if(booking.status === 'cancelled') {
+    showVerificationResult('invalid', '❌ INVALID TICKET – BOOKING CANCELLED', 
+      `This ticket has been cancelled. Do not allow boarding.<br><br>
+       <strong>Passenger:</strong> ${booking.name}<br>
+       <strong>Employee ID:</strong> ${booking.employeeId}`);
+    return;
+  }
+  
+  if(booking.status === 'expired') {
+    showVerificationResult('invalid', '❌ TICKET EXPIRED', 
+      `This ticket has expired.<br><br>
+       <strong>Travel Date:</strong> ${formatDateDisplay(booking.tripDate)}`);
+    return;
+  }
+  
+  if(booking.status === 'boarded') {
+    const boardTime = booking.boardedAt ? new Date(booking.boardedAt).toLocaleString() : 'Unknown';
+    showVerificationResult('warning', '⚠️ TICKET ALREADY USED', 
+      `This passenger has already boarded.<br><br>
+       <strong>Passenger:</strong> ${booking.name}<br>
+       <strong>First Scan Time:</strong> ${boardTime}<br>
+       <strong>Seat:</strong> ${booking.seatNumber}`);
+    return;
+  }
+  
+  if(booking.status === 'booked') {
+    // Valid ticket - mark as boarded
+    const now = Date.now();
+    db.ref('bus/bookings/' + booking.id).update({
+      status: 'boarded',
+      boardedAt: now,
+      boardedBy: currentDriver.name,
+      boardedByDriverId: currentDriver.driverId
+    }).then(() => {
+      showVerificationResult('valid', '✅ VALID TICKET', 
+        `<div class="verification-details">
+          <div><strong>Employee Name:</strong> ${booking.name}</div>
+          <div><strong>Employee ID:</strong> ${booking.employeeId}</div>
+          <div><strong>Department:</strong> ${booking.department}</div>
+          <div><strong>Travel Date:</strong> ${formatDateDisplay(booking.tripDate)}</div>
+          <div><strong>Bus Number/Time:</strong> ${booking.tripTime}</div>
+          <div><strong>Seat Number:</strong> ${booking.seatNumber}</div>
+          <div><strong>Booking Status:</strong> Boarded</div>
+          <div><strong>Boarding Status:</strong> ✅ Just Boarded</div>
+          <div><strong>Boarding Time:</strong> ${new Date(now).toLocaleString()}</div>
+        </div>`);
+    }).catch(err => {
+      showVerificationResult('invalid', 'Error', 'Failed to update boarding status: ' + err.message);
+    });
+  }
+}
+
+function showVerificationResult(type, title, message) {
+  const container = document.getElementById('verification-result');
+  container.innerHTML = `
+    <div class="verification-result ${type}">
+      <h3>${title}</h3>
+      <p>${message}</p>
+      <button class="btn btn-primary" onclick="resetScanner()" style="margin-top:15px;">📷 Scan Next Ticket</button>
+    </div>
+  `;
+}
+
+function resetScanner() {
+  document.getElementById('verification-result').innerHTML = '';
+  startScanner();
+}
+
+// ============ DASHBOARD ============
+function loadDashboard() {
+  const tripDate = document.getElementById('dashboard-trip').value;
+  if(!tripDate) return;
+  
+  const tripBookings = bookings.filter(b => b.tripDate === tripDate);
+  
+  const total = tripBookings.filter(b => b.status === 'booked' || b.status === 'boarded').length;
+  const boarded = tripBookings.filter(b => b.status === 'boarded').length;
+  const remaining = total - boarded;
+  const cancelled = tripBookings.filter(b => b.status === 'cancelled').length;
+  
+  document.getElementById('stat-total').innerText = total;
+  document.getElementById('stat-boarded').innerText = boarded;
+  document.getElementById('stat-remaining').innerText = remaining;
+  document.getElementById('stat-cancelled').innerText = cancelled;
+}
+
+// ============ PASSENGER LIST ============
+function loadPassengerList() {
+  const tripDate = document.getElementById('passenger-trip').value;
+  const container = document.getElementById('passenger-list');
+  
+  if(!tripDate) {
+    container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;">Select a trip to view passengers</p>';
+    return;
+  }
+  
+  const tripBookings = bookings.filter(b => b.tripDate === tripDate);
+  
+  if(tripBookings.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;">No bookings for this trip</p>';
+    return;
+  }
+  
+  container.innerHTML = tripBookings.map(b => {
+    const statusClass = `status-${b.status}`;
+    const isBoarded = b.status === 'boarded';
+    
+    return `
+    <div class="passenger-item ${b.status}">
+      <div class="passenger-info">
+        <strong>${b.name} ${isBoarded ? '✅' : ''}</strong>
+        <small>ID: ${b.employeeId} • Seat: ${b.seatNumber} • ${b.department}</small>
+        ${isBoarded && b.boardedAt ? `<small style="color:var(--success);">Boarded: ${new Date(b.boardedAt).toLocaleTimeString()}</small>` : ''}
+      </div>
+      <span class="status-badge ${statusClass}">${b.status}</span>
+    </div>
+  `}).join('');
+}
+
+function showAlert(msg, type) {
+  const el = document.getElementById('alert-' + type);
+  el.innerText = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3500);
+}
+</script>
+</body>
+</html>
