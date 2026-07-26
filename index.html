@@ -13,7 +13,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--t
 body.has-bg{background-size:cover;background-attachment:fixed;background-position:center;}
 .header{background:linear-gradient(135deg,var(--brand-dark),var(--brand));color:#fff;padding:20px;box-shadow:0 4px 20px rgba(15,118,110,0.3);}
 .header-content{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
-.logo-circle{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 4px 15px rgba(0,0,0,0.2);overflow:hidden;}
+.logo-circle{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;}
 .logo-circle img{width:100%;height:100%;object-fit:cover;}
 .header-info h1{font-size:1.8rem;margin-bottom:5px;}
 .header-info p{opacity:0.9;font-size:1rem;}
@@ -69,6 +69,11 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 .booking-detail{background:#fff;padding:10px;border-radius:6px;}
 .booking-detail label{font-size:0.8rem;color:#64748b;margin-bottom:3px;display:block;}
 .booking-detail strong{font-size:1rem;color:var(--text);}
+.seat-management{background:#f8fafc;padding:20px;border-radius:10px;margin:20px 0;}
+.seat-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-radius:6px;margin:4px;cursor:pointer;border:2px solid var(--border);}
+.seat-toggle input[type="checkbox"]{width:16px;height:16px;cursor:pointer;}
+.seat-toggle.active{background:#d1fae5;border-color:var(--success);}
+.seat-toggle.inactive{background:#fee2e2;border-color:var(--danger);}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;}
 .modal.active{display:flex;}
 .modal-content{background:#fff;padding:30px;border-radius:15px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;}
@@ -93,6 +98,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <button class="nav-btn hidden" id="nav-bookings" onclick="switchTab('bookings')">🎫 My Bookings</button>
     <button class="nav-btn hidden" id="nav-admin-dashboard" onclick="switchTab('admin-dashboard')">📊 Dashboard</button>
     <button class="nav-btn hidden" id="nav-admin-calendar" onclick="switchTab('admin-calendar')">📅 Manage Calendar</button>
+    <button class="nav-btn hidden" id="nav-admin-seats" onclick="switchTab('admin-seats')">💺 Manage Seats</button>
     <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings')">📋 All Bookings</button>
     <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings')">⚙️ Settings</button>
     <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')">🎨 Branding</button>
@@ -114,14 +120,8 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <div class="login-box">
       <div class="card">
         <h2>🔐 Employee Login</h2>
-        <div class="form-group">
-          <label>Employee ID</label>
-          <input type="text" id="login-empid" placeholder="Enter Employee ID">
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="login-password" placeholder="Enter Password">
-        </div>
+        <div class="form-group"><label>Employee ID</label><input type="text" id="login-empid" placeholder="Enter Employee ID"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Enter Password"></div>
         <button class="btn btn-primary btn-full" onclick="employeeLogin()">Login</button>
         <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
           <button class="btn btn-outline btn-full" onclick="showSignup()"> Create Account</button>
@@ -200,10 +200,29 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     </div>
   </div>
 
+  <!-- ADMIN SEAT MANAGEMENT -->
+  <div id="tab-admin-seats" class="tab-content">
+    <div class="card">
+      <h2>💺 Manage Seat Availability</h2>
+      <p style="color:#64748b;margin-bottom:15px;">Mark seats as available or unavailable for specific dates.</p>
+      
+      <div class="form-group">
+        <label>Select Trip Date</label>
+        <input type="date" id="seat-date" onchange="loadSeatManagement()">
+      </div>
+      
+      <div class="seat-management" id="seat-management-container">
+        <p style="text-align:center;color:#94a3b8;padding:20px;">Select a date above to manage seats</p>
+      </div>
+      
+      <button class="btn btn-primary" onclick="saveSeatAvailability()" style="margin-top:15px;">💾 Save Seat Settings</button>
+    </div>
+  </div>
+
   <!-- ADMIN BOOKINGS -->
   <div id="tab-admin-bookings" class="tab-content">
     <div class="card">
-      <h2>📋 All Bookings</h2>
+      <h2> All Bookings</h2>
       <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>Employee</th><th>Department</th><th>Seat</th><th>Mobile</th><th>Status</th><th>Actions</th></tr></thead>
@@ -255,17 +274,16 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 
 <script>
 // ============================================================
-// ️ CRITICAL: REPLACE THE CONFIG BELOW WITH YOUR ACTUAL FIREBASE CONFIG
-// Get it from: Firebase Console → Project Settings → Your apps → Web app
+// ️ REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
 // ============================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyAgU15_P_cmqYW0jePaaT5RqWAyOpAdYYk",
-  authDomain: "busbooking-b5662.firebaseapp.com",
-  projectId: "busbooking-b5662",
-  storageBucket: "busbooking-b5662.firebasestorage.app",
-  messagingSenderId: "829369142403",
-  appId: "1:829369142403:web:a5891f33a3efe71cf65fb6",
-  measurementId: "G-YKPY31X3S3"
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "busbooking.firebaseapp.com",
+  databaseURL: "https://busbooking-default-rtdb.firebaseio.com",
+  projectId: "busbooking",
+  storageBucket: "busbooking.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -280,6 +298,7 @@ let users = [];
 let settings = {openTime: '10:00', closeTime: '18:30'};
 let tempLogo = null;
 let tempBg = null;
+let seatAvailability = {};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -327,6 +346,7 @@ function setupFileUploads() {
 }
 
 function loadAllData() {
+  // Load trips
   db.ref('bus/trips').on('value', snap => {
     const data = snap.val();
     trips = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
@@ -335,6 +355,7 @@ function loadAllData() {
     updateStats();
   });
   
+  // Load bookings
   db.ref('bus/bookings').on('value', snap => {
     const data = snap.val();
     bookings = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
@@ -343,12 +364,14 @@ function loadAllData() {
     updateStats();
   });
   
+  // Load users
   db.ref('bus/users').on('value', snap => {
     const data = snap.val();
     users = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
     updateStats();
   });
   
+  // Load settings
   db.ref('bus/settings').on('value', snap => {
     const s = snap.val();
     if(s) {
@@ -358,6 +381,12 @@ function loadAllData() {
     }
   });
   
+  // Load seat availability
+  db.ref('bus/seatAvailability').on('value', snap => {
+    seatAvailability = snap.val() || {};
+  });
+  
+  // Load branding
   db.ref('bus/branding').on('value', snap => {
     const d = snap.val();
     if(!d) return;
@@ -396,6 +425,7 @@ function switchTab(tabName) {
   if(tabName === 'bookings' && currentUser) renderMyBookings();
   if(tabName === 'admin-dashboard') updateStats();
   if(tabName === 'admin-calendar') renderAdminTrips();
+  if(tabName === 'admin-seats') loadSeatManagement();
   if(tabName === 'admin-bookings') loadAdminBookings();
 }
 
@@ -414,12 +444,12 @@ function showSignup() {
 function updateNav() {
   const isLoggedIn = currentUser !== null;
   
-  ['nav-calendar','nav-bookings','nav-admin-dashboard','nav-admin-calendar','nav-admin-bookings','nav-admin-settings','nav-admin-branding','nav-login','user-info'].forEach(id => {
+  ['nav-calendar','nav-bookings','nav-admin-dashboard','nav-admin-calendar','nav-admin-seats','nav-admin-bookings','nav-admin-settings','nav-admin-branding','nav-login','user-info'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
   
   if(isAdmin) {
-    ['nav-admin-dashboard','nav-admin-calendar','nav-admin-bookings','nav-admin-settings','nav-admin-branding'].forEach(id => {
+    ['nav-admin-dashboard','nav-admin-calendar','nav-admin-seats','nav-admin-bookings','nav-admin-settings','nav-admin-branding'].forEach(id => {
       document.getElementById(id).classList.remove('hidden');
     });
     document.getElementById('nav-login').classList.remove('hidden');
@@ -542,6 +572,15 @@ function saveBranding() {
   });
 }
 
+// ============ CALENDAR (FIXED DATE ISSUE) ============
+function getLocalDateString(date) {
+  // Returns YYYY-MM-DD in LOCAL timezone (not UTC)
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function renderCalendar() {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -567,12 +606,14 @@ function renderCalendar() {
     grid.appendChild(document.createElement('div'));
   }
   
-  const today = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString(new Date());
   
   for(let day = 1; day <= daysInMonth; day++) {
-    const dateStr = new Date(year, month, day).toISOString().split('T')[0];
+    // Use local date construction to avoid UTC offset issues
+    const dateObj = new Date(year, month, day);
+    const dateStr = getLocalDateString(dateObj);
     const trip = trips.find(t => t.date === dateStr);
-    const isPast = new Date(dateStr) < new Date(today);
+    const isPast = dateStr < todayStr;
     
     const div = document.createElement('div');
     div.className = 'calendar-day';
@@ -588,14 +629,14 @@ function renderCalendar() {
       const bookingCount = bookings.filter(b => b.tripDate === dateStr && b.status === 'confirmed').length;
       const status = bookingCount >= 22 ? 'full' : 'available';
       div.innerHTML = `
-        <div class="day-name">${dayNames[new Date(dateStr).getDay()]}</div>
+        <div class="day-name">${dayNames[dateObj.getDay()]}</div>
         <div class="date">${day}</div>
         <div class="status ${status}">${status === 'full' ? 'Full' : 'Available'}</div>
         <div style="font-size:0.75rem;margin-top:5px;color:#64748b;">${trip.time}</div>
       `;
     } else {
       div.innerHTML = `
-        <div class="day-name">${dayNames[new Date(dateStr).getDay()]}</div>
+        <div class="day-name">${dayNames[dateObj.getDay()]}</div>
         <div class="date">${day}</div>
         <div style="font-size:0.75rem;margin-top:5px;color:#94a3b8;">No Bus</div>
       `;
@@ -616,7 +657,29 @@ function selectDate(dateStr) {
     showAlert('No bus scheduled for this date', 'error');
     return;
   }
-  showAlert('Date selected: ' + dateStr + '. Seat selection coming soon!', 'success');
+  
+  // Check if booking is open
+  const now = new Date();
+  const [openHour, openMin] = settings.openTime.split(':').map(Number);
+  const [closeHour, closeMin] = settings.closeTime.split(':').map(Number);
+  
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  const openTime = openHour * 60 + openMin;
+  const closeTime = closeHour * 60 + closeMin;
+  
+  const todayStr = getLocalDateString(now);
+  
+  if(dateStr !== todayStr) {
+    showAlert('Booking is only open on the travel day (' + dateStr + ')', 'error');
+    return;
+  }
+  
+  if(currentTime < openTime || currentTime > closeTime) {
+    showAlert(`Booking is open from ${settings.openTime} to ${settings.closeTime} on travel day`, 'error');
+    return;
+  }
+  
+  showAlert('Date selected: ' + dateStr + '. Proceeding to seat selection...', 'success');
 }
 
 function updateStats() {
@@ -664,7 +727,7 @@ function renderAdminTrips() {
     return `
       <div class="trip-item">
         <div>
-          <strong>${new Date(t.date).toLocaleDateString()}</strong>
+          <strong>${new Date(t.date + 'T00:00:00').toLocaleDateString()}</strong>
           <div style="color:#64748b;font-size:0.9rem;">Departure: ${t.time} • ${count}/22 seats booked</div>
         </div>
         <button class="btn btn-danger btn-sm" onclick="deleteTrip('${t.id}')">️ Delete</button>
@@ -677,6 +740,63 @@ function deleteTrip(tripId) {
   if(!confirm('Delete this trip?')) return;
   db.ref('bus/trips/' + tripId).remove().then(() => {
     showAlert('Trip deleted', 'success');
+  }).catch(err => {
+    showAlert('Error: ' + err.message, 'error');
+  });
+}
+
+// ============ SEAT MANAGEMENT ============
+function loadSeatManagement() {
+  const date = document.getElementById('seat-date').value;
+  if(!date) return;
+  
+  const container = document.getElementById('seat-management-container');
+  const dayAvailability = seatAvailability[date] || {};
+  
+  let html = '<h3 style="margin-bottom:15px;">Toggle seats (checked = available, unchecked = unavailable)</h3><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+  
+  for(let i = 1; i <= 22; i++) {
+    const isAvailable = dayAvailability[i] !== false;
+    html += `
+      <label class="seat-toggle ${isAvailable ? 'active' : 'inactive'}">
+        <input type="checkbox" data-seat="${i}" ${isAvailable ? 'checked' : ''} onchange="toggleSeatCheckbox(this)">
+        <span>Seat ${i}</span>
+      </label>
+    `;
+  }
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function toggleSeatCheckbox(checkbox) {
+  const label = checkbox.closest('.seat-toggle');
+  if(checkbox.checked) {
+    label.classList.remove('inactive');
+    label.classList.add('active');
+  } else {
+    label.classList.remove('active');
+    label.classList.add('inactive');
+  }
+}
+
+function saveSeatAvailability() {
+  const date = document.getElementById('seat-date').value;
+  if(!date) {
+    showAlert('Please select a date', 'error');
+    return;
+  }
+  
+  const checkboxes = document.querySelectorAll('#seat-management-container input[type="checkbox"]');
+  const availability = {};
+  
+  checkboxes.forEach(cb => {
+    const seatNum = parseInt(cb.dataset.seat);
+    availability[seatNum] = cb.checked;
+  });
+  
+  db.ref('bus/seatAvailability/' + date).set(availability).then(() => {
+    showAlert('Seat availability saved for ' + date, 'success');
   }).catch(err => {
     showAlert('Error: ' + err.message, 'error');
   });
@@ -726,10 +846,10 @@ function renderMyBookings() {
     <div class="booking-card">
       <h3>🎫 Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'}</h3>
       <div class="booking-details">
-        <div class="booking-detail"><label>Travel Date</label><strong>${new Date(b.tripDate).toLocaleDateString()}</strong></div>
+        <div class="booking-detail"><label>Travel Date</label><strong>${new Date(b.tripDate + 'T00:00:00').toLocaleDateString()}</strong></div>
         <div class="booking-detail"><label>Departure Time</label><strong>${b.tripTime || '10:00'}</strong></div>
         <div class="booking-detail"><label>Seat Number</label><strong>${b.seatNumber || 'N/A'}</strong></div>
-        <div class="booking-detail"><label>Status</label><strong style="color:${b.status === 'confirmed' ? 'var(--success)' : 'var(--danger)'};">${b.status === 'confirmed' ? '✅ Confirmed' : '❌ Cancelled'}</strong></div>
+        <div class="booking-detail"><label>Status</label><strong style="color:${b.status === 'confirmed' ? 'var(--success)' : 'var(--danger)'};">${b.status === 'confirmed' ? '✅ Confirmed' : ' Cancelled'}</strong></div>
       </div>
     </div>
   `).join('');
