@@ -113,10 +113,11 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 .status-cancelled{background:#fee2e2;color:#991b1b;}
 .status-boarded{background:#dbeafe;color:#1e40af;}
 .status-expired{background:#e5e7eb;color:#374151;}
-.status-pending{background:#fef3c7;color:#92400e;} /* NEW */
+.status-pending{background:#fef3c7;color:#92400e;}
 .search-box{margin-bottom:15px;}
 .search-box input{max-width:400px;}
 .user-actions{display:flex;gap:5px;flex-wrap:wrap;}
+.booking-limit-input{width:80px;padding:6px;border:2px solid var(--border);border-radius:6px;text-align:center;}
 @media(max-width:768px){.header-content{flex-direction:column;text-align:center;}.nav-content{flex-direction:column;}.nav-btn{width:100%;}.booking-details,.ticket-details-grid{grid-template-columns:1fr;}.seats-grid{grid-template-columns:repeat(4,1fr);gap:6px;}.seat{padding:10px 5px;}}
 </style>
 </head>
@@ -143,9 +144,9 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <button class="nav-btn hidden" id="nav-admin-seats" onclick="switchTab('admin-seats')">💺 Manage Seats</button>
     <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings')">📋 All Bookings</button>
     <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings')">⚙️ Settings</button>
-    <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')">🎨 Branding</button>
-    <button class="nav-btn" id="nav-login" onclick="showLogin()"> Login</button>
-    <button class="nav-btn" id="nav-admin-btn" onclick="showAdminLogin()" style="margin-left:auto;">⚙️ Admin</button>
+    <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')"> Branding</button>
+    <button class="nav-btn" id="nav-login" onclick="showLogin()">🔐 Login</button>
+    <button class="nav-btn" id="nav-admin-btn" onclick="showAdminLogin()" style="margin-left:auto;">️ Admin</button>
     <div class="user-info hidden" id="user-info">
       <span id="user-name-display">👤 User</span>
       <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
@@ -178,7 +179,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     <div class="login-box">
       <div class="card">
         <h2>📝 Create Account</h2>
-        <div class="form-group"><label>Employee ID *</label><input type="text" id="signup-empid"></div>
+        <div class="form-group"><label>Employee ID *</label><input type="text" id="signup-empid" placeholder="e.g., 317 or 0317"></div>
         <div class="form-group"><label>Full Name *</label><input type="text" id="signup-name"></div>
         <div class="form-group">
           <label>Department *</label>
@@ -289,7 +290,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
       <button class="btn btn-primary" onclick="showAddUserModal()" style="margin-bottom:15px;">➕ Add New Employee</button>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Mobile</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Mobile</th><th>Status</th><th>Booking Limit</th><th>Actions</th></tr></thead>
           <tbody id="users-tbody"></tbody>
         </table>
       </div>
@@ -314,20 +315,20 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- ADMIN SEAT MANAGEMENT -->
   <div id="tab-admin-seats" class="tab-content">
     <div class="card">
-      <h2>💺 Manage Seat Availability</h2>
+      <h2> Manage Seat Availability</h2>
       <p style="color:#64748b;margin-bottom:15px;">Mark seats as available or unavailable for specific dates.</p>
       <div class="form-group"><label>Select Trip Date</label><input type="date" id="seat-date" onchange="loadSeatManagement()"></div>
       <div class="seat-management" id="seat-management-container">
         <p style="text-align:center;color:#94a3b8;padding:20px;">Select a date above to manage seats</p>
       </div>
-      <button class="btn btn-primary" onclick="saveSeatAvailability()" style="margin-top:15px;">💾 Save Seat Settings</button>
+      <button class="btn btn-primary" onclick="saveSeatAvailability()" style="margin-top:15px;"> Save Seat Settings</button>
     </div>
   </div>
 
   <!-- ADMIN BOOKINGS -->
   <div id="tab-admin-bookings" class="tab-content">
     <div class="card">
-      <h2> All Bookings</h2>
+      <h2>📋 All Bookings</h2>
       <div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="showBookOnBehalfModal()">➕ Book on Behalf</button>
       </div>
@@ -343,7 +344,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
   <!-- ADMIN SETTINGS -->
   <div id="tab-admin-settings" class="tab-content">
     <div class="card">
-      <h2>️ Booking Settings</h2>
+      <h2>⚙️ Booking Settings</h2>
       <div class="form-group"><label>Booking Opens At</label><input type="time" id="setting-open-time" value="10:00"></div>
       <div class="form-group"><label>Booking Closes At</label><input type="time" id="setting-close-time" value="18:30"></div>
       <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
@@ -368,7 +369,7 @@ th{background:var(--brand);color:#fff;font-weight:600;}
       <div class="form-group">
         <label>Background Image</label>
         <div class="file-upload" id="bg-upload">
-          <p style="font-size:2rem;">🌄</p>
+          <p style="font-size:2rem;"></p>
           <p><strong>Click to upload background</strong></p>
           <input type="file" id="brand-bg-file" accept="image/*">
         </div>
@@ -383,9 +384,9 @@ th{background:var(--brand);color:#fff;font-weight:600;}
 <!-- Add/Edit User Modal -->
 <div id="user-modal" class="modal">
   <div class="modal-content">
-    <h2 style="color:var(--brand);margin-bottom:20px;" id="user-modal-title"> Add New Employee</h2>
+    <h2 style="color:var(--brand);margin-bottom:20px;" id="user-modal-title">➕ Add New Employee</h2>
     <input type="hidden" id="edit-user-id">
-    <div class="form-group"><label>Employee ID *</label><input type="text" id="modal-empid"></div>
+    <div class="form-group"><label>Employee ID *</label><input type="text" id="modal-empid" placeholder="e.g., 317 or 0317"></div>
     <div class="form-group"><label>Full Name *</label><input type="text" id="modal-name"></div>
     <div class="form-group">
       <label>Department *</label>
@@ -410,7 +411,11 @@ th{background:var(--brand);color:#fff;font-weight:600;}
     </div>
     <div class="form-group"><label>Mobile *</label><input type="tel" id="modal-mobile"></div>
     <div class="form-group"><label>Password * (min 6 chars)</label><input type="password" id="modal-password"></div>
-    <button class="btn btn-success btn-full" onclick="saveUser()"> Save Employee</button>
+    <div class="form-group">
+      <label>Maximum Booking Limit</label>
+      <input type="number" id="modal-booking-limit" min="1" value="1" placeholder="Default: 1">
+    </div>
+    <button class="btn btn-success btn-full" onclick="saveUser()">💾 Save Employee</button>
     <button class="btn btn-outline btn-full" onclick="closeModal('user-modal')" style="margin-top:10px;">Cancel</button>
   </div>
 </div>
@@ -588,6 +593,12 @@ function loadAllData() {
   });
 }
 
+// ============ EMPLOYEE ID NORMALIZATION ============
+function normalizeEmployeeId(empId) {
+  // Remove all leading zeros
+  return empId.replace(/^0+/, '') || '0';
+}
+
 function getLocalDateStr(dateObj) {
   const year = dateObj.getFullYear();
   const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -657,7 +668,7 @@ function updateNav() {
   }
 }
 
-// ============ UPDATED LOGIN WITH APPROVAL CHECK ============
+// ============ LOGIN WITH NORMALIZED EMPLOYEE ID ============
 function employeeLogin() {
   const empId = document.getElementById('login-empid').value.trim();
   const password = document.getElementById('login-password').value;
@@ -667,13 +678,19 @@ function employeeLogin() {
     return;
   }
   
-  db.ref('bus/users').orderByChild('employeeId').equalTo(empId).once('value', snap => {
+  // Normalize the entered Employee ID
+  const normalizedEmpId = normalizeEmployeeId(empId);
+  
+  db.ref('bus/users').once('value', snap => {
     let found = null;
     let accountStatus = '';
     
     snap.forEach(child => {
       const data = child.val();
-      if(data.password === btoa(password)) {
+      const normalizedStoredId = normalizeEmployeeId(data.employeeId);
+      
+      // Compare normalized IDs
+      if(normalizedStoredId === normalizedEmpId && data.password === btoa(password)) {
         accountStatus = data.status;
         if(data.status === 'active') {
           found = {id: child.key, ...data};
@@ -702,7 +719,7 @@ function employeeLogin() {
   });
 }
 
-// ============ UPDATED SIGNUP WITH PENDING STATUS ============
+// ============ SIGNUP WITH NORMALIZED ID AND DUPLICATE CHECK ============
 function employeeSignup() {
   const empId = document.getElementById('signup-empid').value.trim();
   const name = document.getElementById('signup-name').value.trim();
@@ -719,21 +736,46 @@ function employeeSignup() {
     return;
   }
   
-  const newUser = {
-    employeeId: empId,
-    name: name,
-    department: dept,
-    mobile: mobile,
-    password: btoa(password),
-    status: 'pending', // Changed from 'active' to 'pending'
-    createdAt: Date.now()
-  };
+  // Normalize the Employee ID
+  const normalizedEmpId = normalizeEmployeeId(empId);
   
-  db.ref('bus/users').push(newUser).then(() => {
-    showAlert('Account created! Awaiting admin approval.', 'warning');
-    showLogin();
-  }).catch(err => {
-    showAlert('Error: ' + err.message, 'error');
+  // Check for duplicate accounts with normalized ID
+  db.ref('bus/users').once('value', snap => {
+    let duplicateFound = false;
+    
+    snap.forEach(child => {
+      const data = child.val();
+      const normalizedStoredId = normalizeEmployeeId(data.employeeId);
+      
+      if(normalizedStoredId === normalizedEmpId) {
+        duplicateFound = true;
+      }
+    });
+    
+    if(duplicateFound) {
+      showAlert('An account already exists for this Employee ID. Please log in or use the "Forgot Password" option.', 'error');
+      return;
+    }
+    
+    // No duplicate found, create account
+    const newUser = {
+      employeeId: empId,
+      normalizedEmployeeId: normalizedEmpId,
+      name: name,
+      department: dept,
+      mobile: mobile,
+      password: btoa(password),
+      status: 'pending',
+      bookingLimit: 1,
+      createdAt: Date.now()
+    };
+    
+    db.ref('bus/users').push(newUser).then(() => {
+      showAlert('Account created! Awaiting admin approval.', 'warning');
+      showLogin();
+    }).catch(err => {
+      showAlert('Error: ' + err.message, 'error');
+    });
   });
 }
 
@@ -784,7 +826,7 @@ function saveBranding() {
   });
 }
 
-// ============ UPDATED USER MANAGEMENT WITH APPROVE BUTTON ============
+// ============ USER MANAGEMENT WITH BOOKING LIMIT ============
 function renderUserManagement() {
   const tbody = document.getElementById('users-tbody');
   if(!tbody) return;
@@ -797,7 +839,7 @@ function renderUserManagement() {
   });
   
   if(filteredUsers.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">No users found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No users found</td></tr>';
     return;
   }
   
@@ -811,6 +853,8 @@ function renderUserManagement() {
       statusClass = 'status-cancelled';
     }
     
+    const bookingLimit = u.bookingLimit || 1;
+    
     return `
     <tr>
       <td><strong>${u.employeeId}</strong></td>
@@ -818,6 +862,11 @@ function renderUserManagement() {
       <td>${u.department}</td>
       <td>${u.mobile}</td>
       <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+      <td>
+        <input type="number" class="booking-limit-input" value="${bookingLimit}" min="1" 
+               onchange="updateBookingLimit('${u.id}', this.value)" 
+               title="Maximum booking limit for this employee">
+      </td>
       <td class="user-actions">
         ${u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')">✅ Approve</button>` : ''}
         <button class="btn btn-outline btn-sm" onclick="editUser('${u.id}')">✏️ Edit</button>
@@ -828,7 +877,23 @@ function renderUserManagement() {
   `}).join('');
 }
 
-// ============ NEW APPROVE FUNCTION ============
+// ============ UPDATE BOOKING LIMIT ============
+function updateBookingLimit(userId, newLimit) {
+  const limit = parseInt(newLimit);
+  if(isNaN(limit) || limit < 1) {
+    showAlert('Booking limit must be at least 1', 'error');
+    renderUserManagement();
+    return;
+  }
+  
+  db.ref('bus/users/' + userId).update({bookingLimit: limit}).then(() => {
+    showAlert('Booking limit updated successfully!', 'success');
+  }).catch(err => {
+    showAlert('Error: ' + err.message, 'error');
+    renderUserManagement();
+  });
+}
+
 function approveUser(userId) {
   if(!confirm('Approve this employee? They will be able to log in immediately.')) return;
   
@@ -847,6 +912,7 @@ function showAddUserModal() {
   document.getElementById('modal-dept').value = '';
   document.getElementById('modal-mobile').value = '';
   document.getElementById('modal-password').value = '';
+  document.getElementById('modal-booking-limit').value = '1';
   document.getElementById('user-modal').classList.add('active');
 }
 
@@ -861,6 +927,7 @@ function editUser(userId) {
   document.getElementById('modal-dept').value = user.department;
   document.getElementById('modal-mobile').value = user.mobile;
   document.getElementById('modal-password').value = '';
+  document.getElementById('modal-booking-limit').value = user.bookingLimit || 1;
   document.getElementById('user-modal').classList.add('active');
 }
 
@@ -871,17 +938,36 @@ function saveUser() {
   const dept = document.getElementById('modal-dept').value;
   const mobile = document.getElementById('modal-mobile').value.trim();
   const password = document.getElementById('modal-password').value;
+  const bookingLimit = parseInt(document.getElementById('modal-booking-limit').value) || 1;
   
   if(!empId || !name || !dept || !mobile) {
     showAlert('Please fill all required fields', 'error');
     return;
   }
   
+  // Normalize Employee ID
+  const normalizedEmpId = normalizeEmployeeId(empId);
+  
+  // Check for duplicates (only when adding new user)
+  if(!userId) {
+    const duplicateFound = users.some(u => {
+      const normalizedStoredId = normalizeEmployeeId(u.employeeId);
+      return normalizedStoredId === normalizedEmpId;
+    });
+    
+    if(duplicateFound) {
+      showAlert('An account already exists for this Employee ID.', 'error');
+      return;
+    }
+  }
+  
   const userData = {
     employeeId: empId,
+    normalizedEmployeeId: normalizedEmpId,
     name: name,
     department: dept,
     mobile: mobile,
+    bookingLimit: bookingLimit,
     updatedAt: Date.now()
   };
   
@@ -902,7 +988,7 @@ function saveUser() {
       return;
     }
     userData.password = btoa(password);
-    userData.status = 'pending'; // New users added by admin also need approval (or change to 'active' if you prefer)
+    userData.status = 'pending';
     userData.createdAt = Date.now();
     
     db.ref('bus/users').push(userData).then(() => {
@@ -1012,6 +1098,7 @@ function changeMonth(delta) {
   renderCalendar();
 }
 
+// ============ BOOKING WITH LIMIT CHECK ============
 function selectDateForBooking(dateStr) {
   const trip = trips.find(t => t.date === dateStr);
   if(!trip) {
@@ -1036,6 +1123,19 @@ function selectDateForBooking(dateStr) {
   
   if(currentTime < openTime || currentTime > closeTime) {
     showAlert(`Booking is open from ${settings.openTime} to ${settings.closeTime} on travel day`, 'error');
+    return;
+  }
+  
+  // Check booking limit
+  const userBookings = bookings.filter(b => 
+    b.userId === currentUser.id && 
+    (b.status === 'booked' || b.status === 'boarded')
+  ).length;
+  
+  const bookingLimit = currentUser.bookingLimit || 1;
+  
+  if(userBookings >= bookingLimit) {
+    showAlert('You have reached your maximum booking limit. Please contact the administrator if you need additional bookings.', 'error');
     return;
   }
   
@@ -1548,7 +1648,7 @@ function renderMyBookings() {
     
     return `
     <div class="booking-card">
-      <h3> Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'} <span class="status-badge ${statusClass}" style="float:right;">${b.status}</span></h3>
+      <h3>🎫 Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'} <span class="status-badge ${statusClass}" style="float:right;">${b.status}</span></h3>
       <div class="booking-details">
         <div class="booking-detail"><label>Travel Date</label><strong>${formatDateDisplay(b.tripDate)}</strong></div>
         <div class="booking-detail"><label>Departure Time</label><strong>${b.tripTime || '10:00'}</strong></div>
@@ -1556,9 +1656,9 @@ function renderMyBookings() {
         <div class="booking-detail"><label>Booking Time</label><strong>${new Date(b.bookedAt).toLocaleString()}</strong></div>
       </div>
       <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
-        ${canDownload ? `<button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">🎫 View/Download Ticket</button>` : ''}
+        ${canDownload ? `<button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')"> View/Download Ticket</button>` : ''}
         ${canCancel ? `<button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.id}')">❌ Cancel</button>` : ''}
-        <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">🗑️ Delete</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">️ Delete</button>
       </div>
     </div>
   `}).join('');
