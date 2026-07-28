@@ -1126,30 +1126,24 @@ function selectDateForBooking(dateStr) {
     return;
   }
   
-  // Check booking limit
-  const userBookings = bookings.filter(b => 
-    b.userId === currentUser.id && 
-    (b.status === 'booked' || b.status === 'boarded')
-  ).length;
+  // ✅ FIX: Get the employee's specific booking limit from the database
+  const userData = users.find(u => u.id === currentUser.id);
+  const bookingLimit = userData && userData.bookingLimit ? parseInt(userData.bookingLimit) : 1;
   
-  const bookingLimit = currentUser.bookingLimit || 1;
-  
-  if(userBookings >= bookingLimit) {
-    showAlert('You have reached your maximum booking limit. Please contact the administrator if you need additional bookings.', 'error');
-    return;
-  }
-  
-  const existingBooking = bookings.find(b => 
+  // ✅ FIX: Count how many active tickets the employee already has for this date
+  const currentBookingsCount = bookings.filter(b => 
     b.userId === currentUser.id && 
     b.tripDate === dateStr && 
     (b.status === 'booked' || b.status === 'boarded')
-  );
+  ).length;
   
-  if(existingBooking) {
-    showAlert('You already have a booking for this date', 'error');
+  // ✅ FIX: Only block if they have reached their specific limit
+  if(currentBookingsCount >= bookingLimit) {
+    showAlert(`You have reached your maximum booking limit (${bookingLimit} ticket(s)) for this date. Please contact the administrator if you need additional bookings.`, 'error');
     return;
   }
   
+  // Proceed to seat selection
   selectedDateForBooking = dateStr;
   selectedSeatForBooking = null;
   document.getElementById('selected-date-display').innerText = formatDateDisplay(dateStr);
@@ -1157,6 +1151,7 @@ function selectDateForBooking(dateStr) {
   
   switchTab('seat-selection');
   renderSeatSelection();
+}
 }
 
 function renderSeatSelection() {
