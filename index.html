@@ -399,6 +399,7 @@ let seatAvailability = {};
 let currentTicketData = null;
 let selectedDateForBooking = null;
 let selectedSeatForBooking = null;
+let branding = {}; // ✅ ADD THIS LINE
 
 document.addEventListener('DOMContentLoaded', () => {
   setupFileUploads();
@@ -415,13 +416,16 @@ function setupFileUploads() {
 }
 
 function loadAllData() {
-  db.ref('bus/trips').on('value', snap => {
-    const data = snap.val();
-    trips = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
-    if(isAdmin) renderAdminTrips();
-    renderCalendar();
-    updateStats();
-  });
+  db.ref('bus/branding').on('value', snap => {
+  const d = snap.val();
+  if(!d) return;
+  branding = d; // ✅ ADD THIS LINE to store branding globally
+  if(d.hotelName) { document.getElementById('app-hotel-name').innerText = d.hotelName; if(document.getElementById('brand-hotel-name')) document.getElementById('brand-hotel-name').value = d.hotelName; }
+  if(d.tagline) { document.getElementById('app-tagline').innerText = d.tagline; if(document.getElementById('brand-tagline')) document.getElementById('brand-tagline').value = d.tagline; }
+  if(d.logo) { document.getElementById('app-logo').innerHTML = `<img src="${d.logo}">`; if(document.getElementById('brand-logo-preview')) { document.getElementById('brand-logo-preview').src = d.logo; document.getElementById('brand-logo-preview').style.display = 'block'; } }
+  if(d.background) { document.body.style.backgroundImage = `url(${d.background})`; document.body.classList.add('has-bg'); if(document.getElementById('brand-bg-preview')) { document.getElementById('brand-bg-preview').src = d.background; document.getElementById('brand-bg-preview').style.display = 'block'; } }
+  if(d.color) { document.documentElement.style.setProperty('--brand', d.color); if(document.getElementById('brand-color')) document.getElementById('brand-color').value = d.color; }
+});
   db.ref('bus/bookings').on('value', snap => {
     const data = snap.val();
     bookings = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
@@ -880,12 +884,17 @@ function viewTicket(bookingId) {
   currentTicketData = booking;
   const isCancelled = booking.status === 'cancelled';
   const isBoarded = booking.status === 'boarded';
+  
+  // ✅ FIX: Use branding.logo safely with fallback
+  const hotelLogo = branding.logo || '🚌';
+  const hotelName = document.getElementById('app-hotel-name').innerText || 'Bus Booking System';
+  
   const html = `
     <div class="ticket-preview">
       <div class="ticket-serial">Serial: ${booking.secureToken || 'N/A'}</div>
       <div class="ticket-header">
-        <div class="ticket-logo">${branding.logo ? `<img src="${branding.logo}">` : '🚌'}</div>
-        <h2 style="color:#78350f;margin:10px 0 5px;">${document.getElementById('app-hotel-name').innerText}</h2>
+        <div class="ticket-logo">${typeof hotelLogo === 'string' && hotelLogo.startsWith('http') ? `<img src="${hotelLogo}">` : hotelLogo}</div>
+        <h2 style="color:#78350f;margin:10px 0 5px;">${hotelName}</h2>
         <p style="color:#92400e;font-size:0.9rem;">Bus Ticket - Umluj Shopping Trip</p>
         <div style="margin-top:10px;"><span class="status-badge status-${booking.status}">${booking.status.toUpperCase()}</span></div>
       </div>
@@ -904,43 +913,81 @@ function viewTicket(bookingId) {
   `;
   document.getElementById('ticket-content').innerHTML = html;
   document.getElementById('ticket-modal').classList.add('active');
+  
   if(!isCancelled) {
     setTimeout(() => {
       const qrContainer = document.getElementById('qrcode-container');
       if(qrContainer && typeof QRCode !== 'undefined') {
         qrContainer.innerHTML = '';
-        new QRCode(qrContainer, {
-          text: JSON.stringify({token: booking.secureToken, bookingId: booking.id, employeeId: booking.employeeId, name: booking.name, seat: booking.seatNumber, date: booking.tripDate, time: booking.tripTime}),
-          width: 180, height: 180, colorDark: "#0f766e", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H
-        });
+        try {
+          new QRCode(qrContainer, {
+            text: JSON.stringify({token: booking.secureToken, bookingId: booking.id, employeeId: booking.employeeId, name: booking.name, seat: booking.seatNumber, date: booking.tripDate, time: booking.tripTime}),
+            width: 180, 
+            height: 180, 
+            colorDark: "#0f766e", 
+            colorLight: "#ffffff", 
+            correctLevel: QRCode.CorrectLevel.H
+          });
+        } catch(err) {
+          console.error('QR Code generation error:', err);
+          qrContainer.innerHTML = '<p style="color:var(--danger);">QR Code generation failed</p>';
+        }
+      } else {
+        console.warn('QRCode library not loaded or container not found');
       }
-    }, 200);
+    }, 300);
   }
 }
 
 function downloadTicketPDF() {
   if(!currentTicketData) return showAlert('No ticket data', 'error');
   if(currentTicketData.status === 'cancelled') return showAlert('Cannot download ticket - booking is cancelled', 'error');
+  
   try {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const b = currentTicketData;
+    
+    // ✅ FIX: Use branding safely
+    const hotelName = document.getElementById('app-hotel-name').innerText || 'Bus Booking System';
+    
     doc.setFillColor(15, 118, 110);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
-    doc.text(document.getElementById('app-hotel-name').innerText, 105, 20, {align: 'center'});
+    doc.text(hotelName, 105, 20, {align: 'center'});
     doc.setFontSize(12);
     doc.text('Bus Ticket - Umluj Shopping Trip', 105, 30, {align: 'center'});
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
     let y = 60;
-    const details = [['Passenger Name:', b.name], ['Employee ID:', b.employeeId], ['Department:', b.department], ['Mobile:', b.mobile], ['Travel Date:', formatDateDisplay(b.tripDate)], ['Departure Time:', b.tripTime || '10:00'], ['Seat Number:', b.seatNumber.toString()], ['Booking Time:', new Date(b.bookedAt).toLocaleString()], ['Status:', b.status.toUpperCase()]];
-    details.forEach(([label, value]) => { doc.setFont(undefined, 'bold'); doc.text(label, 20, y); doc.setFont(undefined, 'normal'); doc.text(String(value), 80, y); y += 10; });
+    const details = [
+      ['Passenger Name:', b.name], 
+      ['Employee ID:', b.employeeId], 
+      ['Department:', b.department], 
+      ['Mobile:', b.mobile], 
+      ['Travel Date:', formatDateDisplay(b.tripDate)], 
+      ['Departure Time:', b.tripTime || '10:00'], 
+      ['Seat Number:', b.seatNumber.toString()], 
+      ['Booking Time:', new Date(b.bookedAt).toLocaleString()], 
+      ['Status:', b.status.toUpperCase()]
+    ];
+    details.forEach(([label, value]) => { 
+      doc.setFont(undefined, 'bold'); 
+      doc.text(label, 20, y); 
+      doc.setFont(undefined, 'normal'); 
+      doc.text(String(value), 80, y); 
+      y += 10; 
+    });
+    
     const qrContainer = document.getElementById('qrcode-container');
     if(qrContainer) {
       const canvas = qrContainer.querySelector('canvas');
-      if(canvas) { const qrImgData = canvas.toDataURL('image/png'); doc.addImage(qrImgData, 'PNG', 75, y + 10, 60, 60); y += 80; }
+      if(canvas) { 
+        const qrImgData = canvas.toDataURL('image/png'); 
+        doc.addImage(qrImgData, 'PNG', 75, y + 10, 60, 60); 
+        y += 80; 
+      }
     }
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
@@ -948,7 +995,10 @@ function downloadTicketPDF() {
     doc.text('Present this ticket to the driver for verification', 105, 277, {align: 'center'});
     doc.save(`Ticket_${b.employeeId}_${b.tripDate}.pdf`);
     showAlert('Ticket downloaded successfully!', 'success');
-  } catch(err) { showAlert('Error downloading PDF: ' + err.message, 'error'); }
+  } catch(err) { 
+    console.error('PDF generation error:', err);
+    showAlert('Error downloading PDF: ' + err.message, 'error'); 
+  }
 }
 
 function renderMyBookings() {
