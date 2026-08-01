@@ -235,15 +235,33 @@ tr:hover{background:#f8fafc;}
     </div>
   </div>
 
-  <!-- ADMIN DASHBOARD -->
+  <!-- ✅ UPDATED: ADMIN DASHBOARD WITH DATE FILTER -->
   <div id="tab-admin-dashboard" class="tab-content">
     <div class="card">
       <h2>📊 Dashboard Overview</h2>
+      <div style="margin-bottom:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label style="font-weight:600;">Filter by Date:</label>
+        <select id="dashboard-date-filter" onchange="updateDashboardStats()" style="max-width:250px;padding:8px 12px;border:2px solid var(--border);border-radius:8px;">
+          <option value="all">All Dates</option>
+        </select>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;">
-        <div style="background:linear-gradient(135deg,var(--brand),var(--brand-light));color:#fff;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:2rem;font-weight:bold;" id="stat-bookings">0</div><div>Total Bookings</div></div>
-        <div style="background:linear-gradient(135deg,var(--success),#34d399);color:#fff;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:2rem;font-weight:bold;" id="stat-boarded">0</div><div>Boarded</div></div>
-        <div style="background:linear-gradient(135deg,var(--warning),var(--gold-light));color:#fff;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:2rem;font-weight:bold;" id="stat-trips">0</div><div>Scheduled Trips</div></div>
-        <div style="background:linear-gradient(135deg,var(--danger),#f87171);color:#fff;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:2rem;font-weight:bold;" id="stat-users">0</div><div>Registered Users</div></div>
+        <div style="background:linear-gradient(135deg,var(--brand),var(--brand-light));color:#fff;padding:20px;border-radius:10px;text-align:center;">
+          <div style="font-size:2rem;font-weight:bold;" id="stat-trips">0</div>
+          <div>Scheduled Trips</div>
+        </div>
+        <div style="background:linear-gradient(135deg,var(--warning),var(--gold-light));color:#fff;padding:20px;border-radius:10px;text-align:center;">
+          <div style="font-size:2rem;font-weight:bold;" id="stat-booked">0</div>
+          <div>Total Booked</div>
+        </div>
+        <div style="background:linear-gradient(135deg,var(--success),#34d399);color:#fff;padding:20px;border-radius:10px;text-align:center;">
+          <div style="font-size:2rem;font-weight:bold;" id="stat-available">0</div>
+          <div>Total Available</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;padding:20px;border-radius:10px;text-align:center;">
+          <div style="font-size:2rem;font-weight:bold;" id="stat-boarded">0</div>
+          <div>Total Boarded</div>
+        </div>
       </div>
     </div>
   </div>
@@ -475,9 +493,11 @@ function loadAllData() {
     const data = snap.val();
     trips = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
     console.log('📅 Loaded trips:', trips.length);
-    if(isAdmin) renderAdminTrips();
+    if(isAdmin) {
+      renderAdminTrips();
+      updateDashboardStats();
+    }
     renderCalendar();
-    updateStats();
   });
   
   db.ref('bus/bookings').on('value', snap => {
@@ -485,15 +505,16 @@ function loadAllData() {
     bookings = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
     console.log('🎫 Loaded bookings:', bookings.length);
     if(currentUser) renderMyBookings();
-    if(isAdmin) loadAdminBookings();
-    updateStats();
+    if(isAdmin) {
+      loadAdminBookings();
+      updateDashboardStats();
+    }
   });
   
   db.ref('bus/users').on('value', snap => {
     const data = snap.val();
     users = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
     console.log('👥 Loaded users:', users.length);
-    updateStats();
     if(isAdmin) renderUserManagement();
   });
   
@@ -569,7 +590,7 @@ function switchTab(tab, btn) {
   if(tab === 'calendar') renderCalendar();
   if(tab === 'seat-selection' && selectedDateForBooking) renderSeatSelection();
   if(tab === 'bookings' && currentUser) renderMyBookings();
-  if(tab === 'admin-dashboard') updateStats();
+  if(tab === 'admin-dashboard') updateDashboardStats();
   if(tab === 'admin-users') renderUserManagement();
   if(tab === 'admin-calendar') renderAdminTrips();
   if(tab === 'admin-seats') loadSeatManagement();
@@ -959,11 +980,49 @@ function confirmBookingWithSeat() {
   });
 }
 
-function updateStats() {
-  if(document.getElementById('stat-bookings')) document.getElementById('stat-bookings').innerText = bookings.filter(b => b.status === 'booked').length;
-  if(document.getElementById('stat-boarded')) document.getElementById('stat-boarded').innerText = bookings.filter(b => b.status === 'boarded').length;
-  if(document.getElementById('stat-trips')) document.getElementById('stat-trips').innerText = trips.length;
-  if(document.getElementById('stat-users')) document.getElementById('stat-users').innerText = users.filter(u => u.status !== 'inactive').length;
+// ✅ UPDATED: Dashboard Stats with Date Filter
+function updateDashboardStats() {
+  const dateFilter = document.getElementById('dashboard-date-filter');
+  if (!dateFilter) return;
+  
+  const selectedDate = dateFilter.value;
+  
+  // 1. Populate Date Filter Dropdown with unique dates from trips
+  const uniqueDates = [...new Set(trips.map(t => t.date))].sort().reverse();
+  const currentValue = dateFilter.value;
+  dateFilter.innerHTML = '<option value="all">All Dates</option>';
+  uniqueDates.forEach(date => {
+    const option = document.createElement('option');
+    option.value = date;
+    option.textContent = formatDateDisplay(date);
+    dateFilter.appendChild(option);
+  });
+  if (uniqueDates.includes(currentValue) || currentValue === 'all') {
+    dateFilter.value = currentValue;
+  }
+
+  // 2. Filter trips and bookings based on selection
+  let filteredTrips = trips;
+  let filteredBookings = bookings;
+  
+  if (selectedDate !== 'all') {
+    filteredTrips = trips.filter(t => t.date === selectedDate);
+    filteredBookings = bookings.filter(b => b.tripDate === selectedDate);
+  }
+
+  // 3. Calculate stats
+  const totalTrips = filteredTrips.length;
+  const totalCapacity = totalTrips * 22; // 22 seats per bus
+  
+  const totalBooked = filteredBookings.filter(b => b.status === 'booked' || b.status === 'boarded').length;
+  const totalBoarded = filteredBookings.filter(b => b.status === 'boarded').length;
+  const totalAvailable = Math.max(0, totalCapacity - totalBooked);
+
+  // 4. Update DOM
+  if(document.getElementById('stat-trips')) document.getElementById('stat-trips').innerText = totalTrips;
+  if(document.getElementById('stat-booked')) document.getElementById('stat-booked').innerText = totalBooked;
+  if(document.getElementById('stat-available')) document.getElementById('stat-available').innerText = totalAvailable;
+  if(document.getElementById('stat-boarded')) document.getElementById('stat-boarded').innerText = totalBoarded;
 }
 
 function addTrip() {
@@ -1225,12 +1284,10 @@ function deleteUser(userId) {
   });
 }
 
-// ✅ UPDATED: Load Admin Bookings with Date Filter
 function loadAdminBookings() {
   const tbody = document.getElementById('admin-bookings-tbody');
   const dateFilter = document.getElementById('booking-date-filter');
   
-  // 1. Populate Date Filter Dropdown with unique dates
   const uniqueDates = [...new Set(bookings.map(b => b.tripDate))].sort().reverse();
   const currentValue = dateFilter.value;
   dateFilter.innerHTML = '<option value="all">All Dates</option>';
@@ -1240,18 +1297,15 @@ function loadAdminBookings() {
     option.textContent = formatDateDisplay(date);
     dateFilter.appendChild(option);
   });
-  // Restore selection if it still exists
   if (uniqueDates.includes(currentValue) || currentValue === 'all') {
     dateFilter.value = currentValue;
   }
 
-  // 2. Filter bookings based on selection
   let filteredBookings = bookings;
   if (dateFilter.value !== 'all') {
     filteredBookings = bookings.filter(b => b.tripDate === dateFilter.value);
   }
   
-  // 3. Render table
   if(filteredBookings.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No bookings found</td></tr>';
     return;
