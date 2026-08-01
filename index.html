@@ -13,21 +13,18 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.5s;}
 body.has-bg{background-size:cover;background-attachment:fixed;background-position:center;}
-
 .header{background:linear-gradient(135deg,var(--brand-dark),var(--brand));color:#fff;padding:20px;box-shadow:0 4px 20px rgba(15,118,110,0.3);}
 .header-content{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
 .logo-circle{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;}
 .logo-circle img{width:100%;height:100%;object-fit:cover;}
 .header-info h1{font-size:1.8rem;margin-bottom:5px;}
 .header-info p{opacity:0.9;font-size:1rem;}
-
 .navbar{background:#fff;padding:12px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);position:sticky;top:0;z-index:100;}
 .nav-content{max-width:1200px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 .nav-btn{background:transparent;color:var(--brand);border:2px solid var(--brand);padding:8px 18px;border-radius:20px;cursor:pointer;font-weight:600;transition:all 0.3s;font-size:0.9rem;}
 .nav-btn:hover,.nav-btn.active{background:var(--brand);color:#fff;}
 .nav-btn.hidden{display:none !important;}
 .user-info{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--brand);font-weight:600;}
-
 .container{max-width:1200px;margin:30px auto;padding:0 20px;}
 .card{background:var(--card);border-radius:12px;padding:25px;box-shadow:0 4px 15px rgba(0,0,0,0.06);margin-bottom:20px;border:1px solid var(--border);}
 .card h2{color:var(--brand);margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid var(--brand-light);font-size:1.4rem;}
@@ -102,7 +99,6 @@ tr:hover{background:#f8fafc;}
 .legend-box.selected{background:var(--brand);border:2px solid var(--brand-dark);}
 .booking-limit-input{width:80px;padding:6px;border:2px solid var(--border);border-radius:6px;text-align:center;}
 
-/* MOBILE RESPONSIVE STYLES */
 @media(max-width:768px){
   .header-content{flex-direction:column;text-align:center;}
   .nav-content{flex-direction:column;align-items:stretch;}
@@ -295,8 +291,13 @@ tr:hover{background:#f8fafc;}
   <!-- ADMIN BOOKINGS -->
   <div id="tab-admin-bookings" class="tab-content">
     <div class="card">
-      <h2> All Bookings</h2>
-      <div style="margin-bottom:15px;"><button class="btn btn-primary" onclick="showBookOnBehalfModal()">➕ Book on Behalf</button></div>
+      <h2>📋 All Bookings</h2>
+      <div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-primary" onclick="showBookOnBehalfModal()">➕ Book on Behalf</button>
+        <select id="booking-date-filter" onchange="loadAdminBookings()" style="max-width:250px;margin-left:auto;padding:8px 12px;border:2px solid var(--border);border-radius:8px;">
+          <option value="all">All Dates</option>
+        </select>
+      </div>
       <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>Employee</th><th>Department</th><th>Date</th><th>Seat</th><th>Mobile</th><th>Status</th><th>Actions</th></tr></thead>
@@ -322,7 +323,6 @@ tr:hover{background:#f8fafc;}
       <h2>🎨 Customize Appearance</h2>
       <div class="form-group"><label>Hotel/Company Name</label><input type="text" id="brand-hotel-name"></div>
       <div class="form-group"><label>Tagline</label><input type="text" id="brand-tagline"></div>
-      
       <div class="form-group">
         <label>Hotel Logo</label>
         <div class="file-upload" id="logo-upload">
@@ -332,7 +332,6 @@ tr:hover{background:#f8fafc;}
         </div>
         <img id="brand-logo-preview" style="max-width:150px;margin-top:10px;border-radius:10px;display:none;">
       </div>
-      
       <div class="form-group">
         <label>Background Image</label>
         <div class="file-upload" id="bg-upload">
@@ -342,7 +341,6 @@ tr:hover{background:#f8fafc;}
         </div>
         <img id="brand-bg-preview" style="max-width:100%;margin-top:10px;border-radius:10px;display:none;">
       </div>
-      
       <div class="form-group"><label>Primary Color</label><input type="color" id="brand-color" value="#0f766e" style="width:100px;height:40px;"></div>
       <button class="btn btn-primary btn-full" onclick="saveBranding()">💾 Save Branding</button>
     </div>
@@ -1227,15 +1225,39 @@ function deleteUser(userId) {
   });
 }
 
+// ✅ UPDATED: Load Admin Bookings with Date Filter
 function loadAdminBookings() {
   const tbody = document.getElementById('admin-bookings-tbody');
+  const dateFilter = document.getElementById('booking-date-filter');
   
-  if(bookings.length === 0) {
+  // 1. Populate Date Filter Dropdown with unique dates
+  const uniqueDates = [...new Set(bookings.map(b => b.tripDate))].sort().reverse();
+  const currentValue = dateFilter.value;
+  dateFilter.innerHTML = '<option value="all">All Dates</option>';
+  uniqueDates.forEach(date => {
+    const option = document.createElement('option');
+    option.value = date;
+    option.textContent = formatDateDisplay(date);
+    dateFilter.appendChild(option);
+  });
+  // Restore selection if it still exists
+  if (uniqueDates.includes(currentValue) || currentValue === 'all') {
+    dateFilter.value = currentValue;
+  }
+
+  // 2. Filter bookings based on selection
+  let filteredBookings = bookings;
+  if (dateFilter.value !== 'all') {
+    filteredBookings = bookings.filter(b => b.tripDate === dateFilter.value);
+  }
+  
+  // 3. Render table
+  if(filteredBookings.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No bookings found</td></tr>';
     return;
   }
   
-  tbody.innerHTML = bookings.map(b => `
+  tbody.innerHTML = filteredBookings.map(b => `
     <tr>
       <td><strong>${b.name || 'N/A'}</strong><br><small>${b.employeeId || 'N/A'}</small></td>
       <td>${b.department || 'N/A'}</td>
@@ -1244,8 +1266,8 @@ function loadAdminBookings() {
       <td>${b.mobile || 'N/A'}</td>
       <td><span class="status-badge status-${b.status}">${b.status}</span></td>
       <td class="item-actions">
-        <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')"></button>
-        ${b.status === 'booked' ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking('${b.id}')"></button>` : ''}
+        <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">🎫</button>
+        ${b.status === 'booked' ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking('${b.id}')">❌</button>` : ''}
         <button class="btn btn-danger btn-sm" onclick="deleteBooking('${b.id}')" style="margin-left:5px;">🗑️</button>
       </td>
     </tr>
