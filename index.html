@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--brand:#0f766e;--brand-light:#14b8a6;--brand-dark:#0d5c56;--bg:#f0fdfa;--card:#fff;--text:#1e293b;--border:#e2e8f0;--success:#10b981;--danger:#ef4444;--warning:#f59e0b;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -30,8 +31,9 @@ body.has-bg{background-size:cover;background-attachment:fixed;background-positio
 .card h2{color:var(--brand);margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid var(--brand-light);font-size:1.4rem;}
 .form-group{margin-bottom:15px;}
 label{display:block;margin-bottom:6px;font-weight:600;color:#475569;font-size:0.9rem;}
-input,select{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:1rem;background:#fff;}
-input:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,118,110,0.1);}
+input,select,textarea{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:1rem;background:#fff;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,118,110,0.1);}
+input[readonly]{background:#f1f5f9;cursor:not-allowed;color:#64748b;}
 .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95rem;transition:all 0.3s;display:inline-flex;align-items:center;gap:6px;}
 .btn-primary{background:var(--brand);color:#fff;}
 .btn-primary:hover{background:var(--brand-dark);}
@@ -80,6 +82,8 @@ tr:hover{background:#f8fafc;}
 .status-cancelled{background:#fee2e2;color:#991b1b;}
 .status-boarded{background:#dbeafe;color:#1e40af;}
 .status-pending{background:#fef3c7;color:#92400e;}
+.status-active{background:#d1fae5;color:#065f46;}
+.status-inactive{background:#fee2e2;color:#991b1b;}
 .seat-selection-container{background:#f8fafc;padding:30px;border-radius:12px;margin:20px 0;}
 .bus-layout{max-width:500px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
 .bus-front{text-align:center;padding:15px;background:#1e293b;color:#fff;border-radius:8px;margin-bottom:25px;}
@@ -98,6 +102,26 @@ tr:hover{background:#f8fafc;}
 .legend-box.booked{background:#fee2e2;border:2px solid var(--danger);}
 .legend-box.selected{background:var(--brand);border:2px solid var(--brand-dark);}
 .booking-limit-input{width:80px;padding:6px;border:2px solid var(--border);border-radius:6px;text-align:center;}
+
+/* Autocomplete styles */
+.autocomplete-container{position:relative;}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid var(--brand-light);border-radius:8px;max-height:200px;overflow-y:auto;z-index:1000;box-shadow:0 4px 15px rgba(0,0,0,0.1);display:none;margin-top:4px;}
+.autocomplete-list.active{display:block;}
+.autocomplete-item{padding:10px 15px;cursor:pointer;transition:background 0.2s;border-bottom:1px solid var(--border);}
+.autocomplete-item:hover{background:#f0fdfa;}
+.autocomplete-item:last-child{border-bottom:none;}
+.autocomplete-item strong{color:var(--brand);}
+.autocomplete-item small{color:#64748b;display:block;font-size:0.85rem;}
+
+.divider{display:flex;align-items:center;margin:20px 0;color:#94a3b8;font-size:0.85rem;}
+.divider::before,.divider::after{content:'';flex:1;border-bottom:1px solid var(--border);}
+.divider::before{margin-right:10px;}
+.divider::after{margin-left:10px;}
+
+.upload-results{margin-top:15px;padding:15px;background:#f8fafc;border-radius:8px;display:none;}
+.upload-results.active{display:block;}
+.upload-results.success{background:#d1fae5;color:#065f46;}
+.upload-results.error{background:#fee2e2;color:#991b1b;}
 
 @media(max-width:768px){
   .header-content{flex-direction:column;text-align:center;}
@@ -141,7 +165,7 @@ tr:hover{background:#f8fafc;}
     <button class="nav-btn hidden" id="nav-admin-seats" onclick="switchTab('admin-seats')">💺 Manage Seats</button>
     <button class="nav-btn hidden" id="nav-admin-bookings" onclick="switchTab('admin-bookings')">📋 All Bookings</button>
     <button class="nav-btn hidden" id="nav-admin-settings" onclick="switchTab('admin-settings')">⚙️ Settings</button>
-    <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')"> Branding</button>
+    <button class="nav-btn hidden" id="nav-admin-branding" onclick="switchTab('admin-branding')">🎨 Branding</button>
     <button class="nav-btn" id="nav-login" onclick="showLogin()">🔐 Login</button>
     <button class="nav-btn" id="nav-admin-btn" onclick="showAdminLogin()" style="margin-left:auto;">⚙️ Admin</button>
     <div class="user-info hidden" id="user-info">
@@ -165,6 +189,7 @@ tr:hover{background:#f8fafc;}
         <button class="btn btn-primary btn-full" onclick="employeeLogin()">Login</button>
         <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
           <button class="btn btn-outline btn-full" onclick="showSignup()">📝 Create Account</button>
+          <button class="btn btn-outline btn-full" onclick="showForgotPassword()" style="margin-top:10px;">🔑 Forgot Password?</button>
         </div>
       </div>
     </div>
@@ -175,13 +200,84 @@ tr:hover{background:#f8fafc;}
     <div class="login-box">
       <div class="card">
         <h2>📝 Create Account</h2>
-        <div class="form-group"><label>Employee ID *</label><input type="text" id="signup-empid"></div>
-        <div class="form-group"><label>Full Name *</label><input type="text" id="signup-name"></div>
-        <div class="form-group"><label>Department *</label><input type="text" id="signup-dept"></div>
-        <div class="form-group"><label>Mobile *</label><input type="tel" id="signup-mobile"></div>
-        <div class="form-group"><label>Password * (min 6 chars)</label><input type="password" id="signup-password"></div>
-        <button class="btn btn-primary btn-full" onclick="employeeSignup()">Create Account</button>
-        <button class="btn btn-outline btn-full" onclick="showLogin()" style="margin-top:10px;">← Back to Login</button>
+        <p style="color:#64748b;margin-bottom:20px;font-size:0.9rem;">Search for your existing employee profile first, or create a new account manually.</p>
+        
+        <!-- Search Section -->
+        <div class="autocomplete-container">
+          <div class="form-group">
+            <label>🔍 Search Employee ID or Name</label>
+            <input type="text" id="signup-search" placeholder="Type Employee ID or Name..." oninput="searchEmployeeForSignup(this.value)">
+            <div class="autocomplete-list" id="signup-suggestions"></div>
+            <small style="color:#64748b;display:block;margin-top:5px;">Start typing to find your profile</small>
+          </div>
+        </div>
+
+        <!-- Auto-filled Employee Details (shown when found) -->
+        <div id="signup-found-section" style="display:none;">
+          <div style="background:#d1fae5;padding:12px;border-radius:8px;margin-bottom:15px;">
+            <strong style="color:#065f46;">✅ Employee found! Complete your registration:</strong>
+          </div>
+          <div class="form-group"><label>Employee ID</label><input type="text" id="signup-empid" readonly></div>
+          <div class="form-group"><label>Full Name</label><input type="text" id="signup-name" readonly></div>
+          <div class="form-group"><label>Department</label><input type="text" id="signup-dept" readonly></div>
+          <div class="form-group"><label>Mobile Number *</label><input type="tel" id="signup-mobile" placeholder="Enter your mobile number"></div>
+          <div class="form-group"><label>Create Password * (min 6 chars)</label><input type="password" id="signup-password" placeholder="Create your password"></div>
+          <button class="btn btn-success btn-full" onclick="completeSignupFromFound()">✅ Complete Registration</button>
+        </div>
+
+        <div class="divider">OR</div>
+
+        <!-- Manual Creation Section -->
+        <div id="signup-manual-section">
+          <p style="color:#64748b;margin-bottom:15px;font-size:0.85rem;">Can't find your profile? Create a new account manually:</p>
+          <div class="form-group">
+            <label>Account Type *</label>
+            <select id="manual-account-type" onchange="toggleManualAccountType()">
+              <option value="employee">Employee ID</option>
+              <option value="email">Email</option>
+              <option value="mobile">Mobile Number</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Employee ID / Email / Mobile *</label><input type="text" id="manual-userid" placeholder="Enter your ID, email, or mobile"></div>
+          <div class="form-group"><label>Full Name *</label><input type="text" id="manual-name" placeholder="Enter your full name"></div>
+          <div class="form-group"><label>Department *</label><input type="text" id="manual-dept" placeholder="Enter your department"></div>
+          <div class="form-group"><label>Mobile Number *</label><input type="tel" id="manual-mobile" placeholder="Enter your mobile number"></div>
+          <div class="form-group"><label>Create Password * (min 6 chars)</label><input type="password" id="manual-password" placeholder="Create your password"></div>
+          <button class="btn btn-primary btn-full" onclick="createManualAccount()">✅ Create New Account</button>
+        </div>
+
+        <button class="btn btn-outline btn-full" onclick="showLogin()" style="margin-top:15px;">← Back to Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD -->
+  <div id="tab-forgot-password" class="tab-content">
+    <div class="login-box">
+      <div class="card">
+        <h2>🔑 Reset Password</h2>
+        <p style="color:#64748b;margin-bottom:20px;font-size:0.9rem;">Search for your account to reset your password.</p>
+        
+        <div class="autocomplete-container">
+          <div class="form-group">
+            <label>🔍 Search Employee ID or Name</label>
+            <input type="text" id="forgot-search" placeholder="Type Employee ID or Name..." oninput="searchEmployeeForReset(this.value)">
+            <div class="autocomplete-list" id="forgot-suggestions"></div>
+          </div>
+        </div>
+
+        <div id="forgot-found-section" style="display:none;">
+          <div style="background:#d1fae5;padding:12px;border-radius:8px;margin-bottom:15px;">
+            <strong style="color:#065f46;">✅ Account found! Set your new password:</strong>
+          </div>
+          <div class="form-group"><label>Employee ID</label><input type="text" id="forgot-empid" readonly></div>
+          <div class="form-group"><label>Full Name</label><input type="text" id="forgot-name" readonly></div>
+          <div class="form-group"><label>New Password * (min 6 chars)</label><input type="password" id="forgot-new-password" placeholder="Enter new password"></div>
+          <div class="form-group"><label>Confirm Password *</label><input type="password" id="forgot-confirm-password" placeholder="Confirm new password"></div>
+          <button class="btn btn-success btn-full" onclick="resetPassword()">🔑 Reset Password</button>
+        </div>
+
+        <button class="btn btn-outline btn-full" onclick="showLogin()" style="margin-top:15px;">← Back to Login</button>
       </div>
     </div>
   </div>
@@ -235,7 +331,7 @@ tr:hover{background:#f8fafc;}
     </div>
   </div>
 
-  <!-- ✅ UPDATED: ADMIN DASHBOARD WITH DATE FILTER -->
+  <!-- ADMIN DASHBOARD -->
   <div id="tab-admin-dashboard" class="tab-content">
     <div class="card">
       <h2>📊 Dashboard Overview</h2>
@@ -250,7 +346,7 @@ tr:hover{background:#f8fafc;}
           <div style="font-size:2rem;font-weight:bold;" id="stat-trips">0</div>
           <div>Scheduled Trips</div>
         </div>
-        <div style="background:linear-gradient(135deg,var(--warning),var(--gold-light));color:#fff;padding:20px;border-radius:10px;text-align:center;">
+        <div style="background:linear-gradient(135deg,var(--warning),#fbbf24);color:#fff;padding:20px;border-radius:10px;text-align:center;">
           <div style="font-size:2rem;font-weight:bold;" id="stat-booked">0</div>
           <div>Total Booked</div>
         </div>
@@ -270,6 +366,22 @@ tr:hover{background:#f8fafc;}
   <div id="tab-admin-users" class="tab-content">
     <div class="card">
       <h2>👥 User Management</h2>
+      
+      <!-- Employee Upload Section -->
+      <div style="background:#f8fafc;padding:20px;border-radius:10px;margin-bottom:20px;border:2px dashed var(--border);">
+        <h3 style="margin-bottom:15px;">📤 Upload Employee List</h3>
+        <p style="color:#64748b;margin-bottom:15px;font-size:0.9rem;">Upload Excel file with columns: <strong>Employee ID, Name, Department</strong></p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <label class="file-upload" style="flex:1;min-width:200px;margin:0;padding:15px;">
+            <p style="font-size:1.5rem;">📊</p>
+            <p><strong>Click to upload Excel</strong></p>
+            <input type="file" id="employee-upload-file" accept=".xlsx,.xls,.csv" onchange="uploadEmployeeList(this)">
+          </label>
+          <button class="btn btn-outline" onclick="downloadEmployeeTemplate()">📥 Download Template</button>
+        </div>
+        <div class="upload-results" id="upload-results"></div>
+      </div>
+
       <div style="margin-bottom:15px;"><input type="text" id="user-search" placeholder="🔍 Search by Employee ID, Name, or Mobile..." oninput="renderUserManagement()" style="max-width:400px;"></div>
       <button class="btn btn-primary" onclick="showAddUserModal()" style="margin-bottom:15px;">➕ Add New Employee</button>
       <div style="overflow-x:auto;">
@@ -331,7 +443,7 @@ tr:hover{background:#f8fafc;}
       <h2>⚙️ Booking Settings</h2>
       <div class="form-group"><label>Booking Opens At</label><input type="time" id="setting-open-time" value="10:00"></div>
       <div class="form-group"><label>Booking Closes At</label><input type="time" id="setting-close-time" value="18:30"></div>
-      <button class="btn btn-primary" onclick="saveSettings()"> Save Settings</button>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
     </div>
   </div>
 
@@ -440,6 +552,8 @@ let selectedSeatForBooking = null;
 let branding = {};
 let tempLogo = null;
 let tempBg = null;
+let selectedSignupEmployee = null;
+let selectedForgotEmployee = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🚀 App loaded');
@@ -606,7 +720,42 @@ function showLogin() {
 
 function showSignup() { 
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); 
-  document.getElementById('tab-signup').classList.add('active'); 
+  document.getElementById('tab-signup').classList.add('active');
+  resetSignupForm();
+}
+
+function showForgotPassword() {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); 
+  document.getElementById('tab-forgot-password').classList.add('active');
+  resetForgotForm();
+}
+
+function resetSignupForm() {
+  document.getElementById('signup-search').value = '';
+  document.getElementById('signup-empid').value = '';
+  document.getElementById('signup-name').value = '';
+  document.getElementById('signup-dept').value = '';
+  document.getElementById('signup-mobile').value = '';
+  document.getElementById('signup-password').value = '';
+  document.getElementById('manual-userid').value = '';
+  document.getElementById('manual-name').value = '';
+  document.getElementById('manual-dept').value = '';
+  document.getElementById('manual-mobile').value = '';
+  document.getElementById('manual-password').value = '';
+  document.getElementById('signup-found-section').style.display = 'none';
+  document.getElementById('signup-suggestions').classList.remove('active');
+  selectedSignupEmployee = null;
+}
+
+function resetForgotForm() {
+  document.getElementById('forgot-search').value = '';
+  document.getElementById('forgot-empid').value = '';
+  document.getElementById('forgot-name').value = '';
+  document.getElementById('forgot-new-password').value = '';
+  document.getElementById('forgot-confirm-password').value = '';
+  document.getElementById('forgot-found-section').style.display = 'none';
+  document.getElementById('forgot-suggestions').classList.remove('active');
+  selectedForgotEmployee = null;
 }
 
 function updateNavVisibility() {
@@ -628,7 +777,7 @@ function updateNavVisibility() {
       document.getElementById(id).classList.remove('hidden'); 
     });
     document.getElementById('user-info').classList.remove('hidden');
-    document.getElementById('user-name-display').innerText = ' ' + currentUser.name;
+    document.getElementById('user-name-display').innerText = '👤 ' + currentUser.name;
   } else {
     document.getElementById('nav-login').classList.remove('hidden');
     document.getElementById('nav-login').innerText = '🔐 Login';
@@ -660,10 +809,6 @@ function employeeLogin() {
       }
     });
     
-    if(accountStatus === 'pending') {
-      showAlert('Your account is pending admin approval. Please wait.', 'error');
-      return;
-    }
     if(accountStatus === 'inactive') {
       showAlert('Your account has been deactivated. Contact admin.', 'error');
       return;
@@ -686,41 +831,215 @@ function employeeLogin() {
   });
 }
 
-function employeeSignup() {
-  const empId = document.getElementById('signup-empid').value.trim();
-  const name = document.getElementById('signup-name').value.trim();
-  const dept = document.getElementById('signup-dept').value.trim();
+// ============ SIGNUP: Search Employee ============
+function searchEmployeeForSignup(query) {
+  const suggestionsContainer = document.getElementById('signup-suggestions');
+  
+  if(!query || query.length < 2) {
+    suggestionsContainer.classList.remove('active');
+    return;
+  }
+  
+  const searchLower = query.toLowerCase();
+  const matches = users.filter(u => 
+    u.employeeId.toLowerCase().includes(searchLower) || 
+    u.name.toLowerCase().includes(searchLower)
+  ).slice(0, 5);
+  
+  if(matches.length === 0) {
+    suggestionsContainer.classList.remove('active');
+    return;
+  }
+  
+  suggestionsContainer.innerHTML = matches.map(u => `
+    <div class="autocomplete-item" onclick="selectSignupEmployee('${u.id}')">
+      <strong>${u.name}</strong>
+      <small>ID: ${u.employeeId} • ${u.department}</small>
+    </div>
+  `).join('');
+  suggestionsContainer.classList.add('active');
+}
+
+function selectSignupEmployee(userId) {
+  const employee = users.find(u => u.id === userId);
+  if(!employee) return;
+  
+  selectedSignupEmployee = employee;
+  
+  document.getElementById('signup-empid').value = employee.employeeId;
+  document.getElementById('signup-name').value = employee.name;
+  document.getElementById('signup-dept').value = employee.department;
+  document.getElementById('signup-search').value = employee.name + ' (' + employee.employeeId + ')';
+  document.getElementById('signup-found-section').style.display = 'block';
+  document.getElementById('signup-suggestions').classList.remove('active');
+}
+
+function completeSignupFromFound() {
   const mobile = document.getElementById('signup-mobile').value.trim();
   const password = document.getElementById('signup-password').value;
   
-  console.log('📝 Signup attempt:', {empId, name});
-  
-  if(!empId || !name || !dept || !mobile || !password) {
-    showAlert('Please fill all fields', 'error');
+  if(!mobile || !password) {
+    showAlert('Please fill mobile number and password', 'error');
     return;
   }
+  
   if(password.length < 6) {
     showAlert('Password must be at least 6 characters', 'error');
     return;
   }
   
+  if(!selectedSignupEmployee) {
+    showAlert('Please select an employee first', 'error');
+    return;
+  }
+  
+  // Update existing employee record
+  db.ref('bus/users/' + selectedSignupEmployee.id).update({
+    mobile: mobile,
+    password: btoa(password),
+    status: 'active',
+    accountActivatedAt: Date.now()
+  }).then(() => {
+    showAlert('Account activated successfully! You can now login.', 'success');
+    resetSignupForm();
+    showLogin();
+  }).catch(err => {
+    showAlert('Error: ' + err.message, 'error');
+  });
+}
+
+function toggleManualAccountType() {
+  const type = document.getElementById('manual-account-type').value;
+  const input = document.getElementById('manual-userid');
+  
+  if(type === 'employee') {
+    input.placeholder = 'Enter Employee ID';
+  } else if(type === 'email') {
+    input.placeholder = 'Enter your email address';
+  } else {
+    input.placeholder = 'Enter your mobile number';
+  }
+}
+
+function createManualAccount() {
+  const accountType = document.getElementById('manual-account-type').value;
+  const userId = document.getElementById('manual-userid').value.trim();
+  const name = document.getElementById('manual-name').value.trim();
+  const dept = document.getElementById('manual-dept').value.trim();
+  const mobile = document.getElementById('manual-mobile').value.trim();
+  const password = document.getElementById('manual-password').value;
+  
+  if(!userId || !name || !dept || !mobile || !password) {
+    showAlert('Please fill all fields', 'error');
+    return;
+  }
+  
+  if(password.length < 6) {
+    showAlert('Password must be at least 6 characters', 'error');
+    return;
+  }
+  
+  // Check for duplicate
+  const duplicateFound = users.some(u => u.employeeId === userId);
+  if(duplicateFound) {
+    showAlert('An account already exists with this ID. Please login or reset password.', 'error');
+    return;
+  }
+  
   const newUser = {
-    employeeId: empId,
+    employeeId: userId,
     name: name,
     department: dept,
     mobile: mobile,
     password: btoa(password),
-    status: 'pending',
+    status: 'active',
+    accountType: accountType,
     bookingLimit: 1,
     createdAt: Date.now()
   };
   
   db.ref('bus/users').push(newUser).then(() => {
-    console.log('✅ Account created');
-    showAlert('Account created! Awaiting admin approval.', 'success');
+    showAlert('Account created successfully! You can now login.', 'success');
+    resetSignupForm();
     showLogin();
   }).catch(err => {
-    console.error('❌ Signup error:', err);
+    showAlert('Error: ' + err.message, 'error');
+  });
+}
+
+// ============ FORGOT PASSWORD ============
+function searchEmployeeForReset(query) {
+  const suggestionsContainer = document.getElementById('forgot-suggestions');
+  
+  if(!query || query.length < 2) {
+    suggestionsContainer.classList.remove('active');
+    return;
+  }
+  
+  const searchLower = query.toLowerCase();
+  const matches = users.filter(u => 
+    u.employeeId.toLowerCase().includes(searchLower) || 
+    u.name.toLowerCase().includes(searchLower)
+  ).slice(0, 5);
+  
+  if(matches.length === 0) {
+    suggestionsContainer.classList.remove('active');
+    return;
+  }
+  
+  suggestionsContainer.innerHTML = matches.map(u => `
+    <div class="autocomplete-item" onclick="selectForgotEmployee('${u.id}')">
+      <strong>${u.name}</strong>
+      <small>ID: ${u.employeeId} • ${u.department}</small>
+    </div>
+  `).join('');
+  suggestionsContainer.classList.add('active');
+}
+
+function selectForgotEmployee(userId) {
+  const employee = users.find(u => u.id === userId);
+  if(!employee) return;
+  
+  selectedForgotEmployee = employee;
+  
+  document.getElementById('forgot-empid').value = employee.employeeId;
+  document.getElementById('forgot-name').value = employee.name;
+  document.getElementById('forgot-search').value = employee.name + ' (' + employee.employeeId + ')';
+  document.getElementById('forgot-found-section').style.display = 'block';
+  document.getElementById('forgot-suggestions').classList.remove('active');
+}
+
+function resetPassword() {
+  const newPassword = document.getElementById('forgot-new-password').value;
+  const confirmPassword = document.getElementById('forgot-confirm-password').value;
+  
+  if(!newPassword || !confirmPassword) {
+    showAlert('Please fill both password fields', 'error');
+    return;
+  }
+  
+  if(newPassword.length < 6) {
+    showAlert('Password must be at least 6 characters', 'error');
+    return;
+  }
+  
+  if(newPassword !== confirmPassword) {
+    showAlert('Passwords do not match', 'error');
+    return;
+  }
+  
+  if(!selectedForgotEmployee) {
+    showAlert('Please select an account first', 'error');
+    return;
+  }
+  
+  db.ref('bus/users/' + selectedForgotEmployee.id).update({
+    password: btoa(newPassword)
+  }).then(() => {
+    showAlert('Password reset successfully! You can now login.', 'success');
+    resetForgotForm();
+    showLogin();
+  }).catch(err => {
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -773,6 +1092,104 @@ function saveBranding() {
   }).catch(err => {
     showAlert('Error: ' + err.message, 'error');
   });
+}
+
+// ============ EMPLOYEE LIST UPLOAD ============
+function downloadEmployeeTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['Employee ID', 'Name', 'Department'],
+    ['E001', 'John Doe', 'Front Office'],
+    ['E002', 'Jane Smith', 'Housekeeping']
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Employees');
+  XLSX.writeFile(wb, 'employee-list-template.xlsx');
+  showAlert('Template downloaded!', 'success');
+}
+
+function uploadEmployeeList(input) {
+  const file = input.files[0];
+  if(!file) return;
+  
+  const resultsDiv = document.getElementById('upload-results');
+  resultsDiv.className = 'upload-results';
+  resultsDiv.style.display = 'block';
+  resultsDiv.innerHTML = '<p>Processing file...</p>';
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, {type: 'array'});
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+      
+      let successCount = 0;
+      let errorCount = 0;
+      let errors = [];
+      
+      jsonData.slice(1).forEach((row, index) => {
+        const empId = String(row[0] || '').trim();
+        const name = String(row[1] || '').trim();
+        const dept = String(row[2] || '').trim();
+        
+        if(!empId || !name || !dept) {
+          errorCount++;
+          errors.push(`Row ${index + 2}: Missing required fields`);
+          return;
+        }
+        
+        // Check if employee already exists
+        const existingUser = users.find(u => u.employeeId === empId);
+        if(existingUser) {
+          errorCount++;
+          errors.push(`Row ${index + 2}: Employee ID ${empId} already exists`);
+          return;
+        }
+        
+        // Create new employee (active by default)
+        const newEmployee = {
+          employeeId: empId,
+          name: name,
+          department: dept,
+          mobile: '',
+          password: '',
+          status: 'active',
+          bookingLimit: 1,
+          createdAt: Date.now()
+        };
+        
+        db.ref('bus/users').push(newEmployee);
+        successCount++;
+      });
+      
+      if(errorCount === 0) {
+        resultsDiv.className = 'upload-results success active';
+        resultsDiv.innerHTML = `<p>✅ Successfully uploaded ${successCount} employees!</p>`;
+      } else {
+        resultsDiv.className = 'upload-results error active';
+        resultsDiv.innerHTML = `
+          <p>⚠️ Upload completed with ${errorCount} errors</p>
+          <p>✅ Successfully uploaded: ${successCount}</p>
+          <p>❌ Errors: ${errorCount}</p>
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer;">View error details</summary>
+            <ul style="margin-top:10px;font-size:0.85rem;">
+              ${errors.map(e => `<li>${e}</li>`).join('')}
+            </ul>
+          </details>
+        `;
+      }
+      
+      showAlert(`Upload complete! ${successCount} added, ${errorCount} errors.`, successCount > 0 ? 'success' : 'error');
+    } catch(err) {
+      resultsDiv.className = 'upload-results error active';
+      resultsDiv.innerHTML = `<p>❌ Error reading file: ${err.message}</p>`;
+      showAlert('Error reading file: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
 }
 
 function selectDateForBooking(dateStr) {
@@ -980,14 +1397,12 @@ function confirmBookingWithSeat() {
   });
 }
 
-// ✅ UPDATED: Dashboard Stats with Date Filter
 function updateDashboardStats() {
   const dateFilter = document.getElementById('dashboard-date-filter');
   if (!dateFilter) return;
   
   const selectedDate = dateFilter.value;
   
-  // 1. Populate Date Filter Dropdown with unique dates from trips
   const uniqueDates = [...new Set(trips.map(t => t.date))].sort().reverse();
   const currentValue = dateFilter.value;
   dateFilter.innerHTML = '<option value="all">All Dates</option>';
@@ -1001,7 +1416,6 @@ function updateDashboardStats() {
     dateFilter.value = currentValue;
   }
 
-  // 2. Filter trips and bookings based on selection
   let filteredTrips = trips;
   let filteredBookings = bookings;
   
@@ -1010,15 +1424,13 @@ function updateDashboardStats() {
     filteredBookings = bookings.filter(b => b.tripDate === selectedDate);
   }
 
-  // 3. Calculate stats
   const totalTrips = filteredTrips.length;
-  const totalCapacity = totalTrips * 22; // 22 seats per bus
+  const totalCapacity = totalTrips * 22;
   
   const totalBooked = filteredBookings.filter(b => b.status === 'booked' || b.status === 'boarded').length;
   const totalBoarded = filteredBookings.filter(b => b.status === 'boarded').length;
   const totalAvailable = Math.max(0, totalCapacity - totalBooked);
 
-  // 4. Update DOM
   if(document.getElementById('stat-trips')) document.getElementById('stat-trips').innerText = totalTrips;
   if(document.getElementById('stat-booked')) document.getElementById('stat-booked').innerText = totalBooked;
   if(document.getElementById('stat-available')) document.getElementById('stat-available').innerText = totalAvailable;
@@ -1028,8 +1440,6 @@ function updateDashboardStats() {
 function addTrip() {
   const date = document.getElementById('trip-date').value;
   const time = document.getElementById('trip-time').value;
-  
-  console.log('📅 Adding trip:', {date, time});
   
   if(!date || !time) {
     showAlert('Please select date and time', 'error');
@@ -1046,11 +1456,9 @@ function addTrip() {
     time: time,
     createdAt: Date.now()
   }).then(() => {
-    console.log('✅ Trip added');
     showAlert('Trip added successfully for ' + formatDateDisplay(date) + '!', 'success');
     document.getElementById('trip-date').value = '';
   }).catch(err => {
-    console.error('❌ Error adding trip:', err);
     showAlert('Error: ' + err.message, 'error');
   });
 }
@@ -1143,10 +1551,9 @@ function renderUserManagement() {
   }
   
   tbody.innerHTML = filteredUsers.map(u => {
-    let statusClass = 'status-booked';
+    let statusClass = 'status-active';
     let statusText = u.status || 'active';
-    if(u.status === 'pending') statusClass = 'status-pending';
-    else if(u.status === 'inactive') statusClass = 'status-cancelled';
+    if(u.status === 'inactive') statusClass = 'status-inactive';
     
     const bookingLimit = u.bookingLimit || 1;
     
@@ -1155,11 +1562,10 @@ function renderUserManagement() {
         <td><strong>${u.employeeId}</strong></td>
         <td>${u.name}</td>
         <td>${u.department}</td>
-        <td>${u.mobile}</td>
+        <td>${u.mobile || '-'}</td>
         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
         <td><input type="number" class="booking-limit-input" value="${bookingLimit}" min="1" onchange="updateBookingLimit('${u.id}', this.value)"></td>
         <td class="item-actions">
-          ${u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')">✅</button>` : ''}
           <button class="btn btn-outline btn-sm" onclick="editUser('${u.id}')">✏️</button>
           <button class="btn btn-warning btn-sm" onclick="toggleUserStatus('${u.id}')">${u.status === 'active' ? '🚫' : '✅'}</button>
           <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">🗑️</button>
@@ -1182,15 +1588,8 @@ function updateBookingLimit(userId, newLimit) {
   });
 }
 
-function approveUser(userId) {
-  if(!confirm('Approve this employee?')) return;
-  db.ref('bus/users/' + userId).update({status: 'active'}).then(() => {
-    showAlert('Employee approved successfully!', 'success');
-  });
-}
-
 function showAddUserModal() {
-  document.getElementById('user-modal-title').innerText = ' Add New Employee';
+  document.getElementById('user-modal-title').innerText = '➕ Add New Employee';
   document.getElementById('edit-user-id').value = '';
   document.getElementById('modal-empid').value = '';
   document.getElementById('modal-name').value = '';
@@ -1236,6 +1635,7 @@ function saveUser() {
     department: dept,
     mobile: mobile,
     bookingLimit: bookingLimit,
+    status: 'active',
     updatedAt: Date.now()
   };
   
@@ -1251,11 +1651,11 @@ function saveUser() {
   } else {
     if(!password || password.length < 6) return showAlert('Password is required for new employees (min 6 chars)', 'error');
     userData.password = btoa(password);
-    userData.status = 'pending';
+    userData.status = 'active';
     userData.createdAt = Date.now();
     
     db.ref('bus/users').push(userData).then(() => {
-      showAlert('Employee added! (Status: Pending)', 'success');
+      showAlert('Employee added successfully!', 'success');
       closeModal('user-modal');
     });
   }
@@ -1535,7 +1935,7 @@ function renderMyBookings() {
     
     return `
       <div class="booking-card">
-        <h3> Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'} <span class="status-badge ${statusClass}" style="float:right;">${b.status}</span></h3>
+        <h3>🎫 Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'} <span class="status-badge ${statusClass}" style="float:right;">${b.status}</span></h3>
         <div class="booking-details">
           <div class="booking-detail"><label>Travel Date</label><strong>${formatDateDisplay(b.tripDate)}</strong></div>
           <div class="booking-detail"><label>Departure Time</label><strong>${b.tripTime || '10:00'}</strong></div>
@@ -1543,7 +1943,7 @@ function renderMyBookings() {
           <div class="booking-detail"><label>Booking Time</label><strong>${new Date(b.bookedAt).toLocaleString()}</strong></div>
         </div>
         <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
-          ${canDownload ? `<button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')"> View/Download Ticket</button>` : ''}
+          ${canDownload ? `<button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">👁️ View/Download Ticket</button>` : ''}
           ${canCancel ? `<button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.id}')">❌ Cancel</button>` : ''}
           <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">🗑️ Delete</button>
         </div>
@@ -1584,6 +1984,13 @@ function showAlert(msg, type) {
   el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 3500);
 }
+
+// Close autocomplete on outside click
+document.addEventListener('click', function(e) {
+  if(!e.target.closest('.autocomplete-container')) {
+    document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('active'));
+  }
+});
 </script>
 </body>
 </html>
