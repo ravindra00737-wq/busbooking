@@ -103,7 +103,6 @@ tr:hover{background:#f8fafc;}
 .legend-box.selected{background:var(--brand);border:2px solid var(--brand-dark);}
 .booking-limit-input{width:80px;padding:6px;border:2px solid var(--border);border-radius:6px;text-align:center;}
 
-/* Autocomplete styles */
 .autocomplete-container{position:relative;}
 .autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid var(--brand-light);border-radius:8px;max-height:200px;overflow-y:auto;z-index:1000;box-shadow:0 4px 15px rgba(0,0,0,0.1);display:none;margin-top:4px;}
 .autocomplete-list.active{display:block;}
@@ -208,7 +207,7 @@ tr:hover{background:#f8fafc;}
             <label>🔍 Search Employee ID or Name</label>
             <input type="text" id="signup-search" placeholder="Type Employee ID or Name..." oninput="searchEmployeeForSignup(this.value)">
             <div class="autocomplete-list" id="signup-suggestions"></div>
-            <small style="color:#64748b;display:block;margin-top:5px;">Start typing to find your profile</small>
+            <small style="color:#64748b;display:block;margin-top:5px;">Only employees who have NOT yet created a profile will appear.</small>
           </div>
         </div>
 
@@ -443,6 +442,14 @@ tr:hover{background:#f8fafc;}
       <h2>⚙️ Booking Settings</h2>
       <div class="form-group"><label>Booking Opens At</label><input type="time" id="setting-open-time" value="10:00"></div>
       <div class="form-group"><label>Booking Closes At</label><input type="time" id="setting-close-time" value="18:30"></div>
+      <div class="form-group">
+        <label>Profile Approval</label>
+        <select id="setting-require-approval">
+          <option value="disabled">Disabled – New profiles auto-activate</option>
+          <option value="enabled">Enabled – New profiles require admin approval</option>
+        </select>
+        <small style="color:#64748b;display:block;margin-top:5px;">When enabled, newly created employee profiles stay "pending" until an admin approves them in User Management.</small>
+      </div>
       <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
     </div>
   </div>
@@ -544,7 +551,7 @@ let currentMonth = new Date();
 let bookings = [];
 let trips = [];
 let users = [];
-let settings = {openTime: '10:00', closeTime: '18:30'};
+let settings = {openTime: '10:00', closeTime: '18:30', requireApproval: false};
 let seatAvailability = {};
 let currentTicketData = null;
 let selectedDateForBooking = null;
@@ -638,6 +645,7 @@ function loadAllData() {
       settings = {...settings, ...s}; 
       if(document.getElementById('setting-open-time')) document.getElementById('setting-open-time').value = s.openTime || '10:00';
       if(document.getElementById('setting-close-time')) document.getElementById('setting-close-time').value = s.closeTime || '18:30';
+      if(document.getElementById('setting-require-approval')) document.getElementById('setting-require-approval').value = (settings.requireApproval ? 'enabled' : 'disabled');
     }
   });
   
@@ -809,6 +817,10 @@ function employeeLogin() {
       }
     });
     
+    if(accountStatus === 'pending') {
+      showAlert('Your account is pending admin approval. Please wait for approval.', 'error');
+      return;
+    }
     if(accountStatus === 'inactive') {
       showAlert('Your account has been deactivated. Contact admin.', 'error');
       return;
@@ -841,10 +853,15 @@ function searchEmployeeForSignup(query) {
   }
   
   const searchLower = query.toLowerCase();
-  const matches = users.filter(u => 
-    u.employeeId.toLowerCase().includes(searchLower) || 
-    u.name.toLowerCase().includes(searchLower)
-  ).slice(0, 5);
+  const matches = users.filter(u => {
+    // Hide employees who have ALREADY created a profile (set a password),
+    // including those who have already booked a ticket.
+    const hasPassword = !!(u.password && String(u.password).length > 0);
+    const hasBooked = bookings.some(b => (b.userId === u.id) || (b.employeeId && b.employeeId === u.employeeId));
+    if (hasPassword && hasBooked) return false; // already created + booked -> hide
+    if (hasPassword) return false; // already created profile -> hide (first-time only)
+    return (u.employeeId.toLowerCase().includes(searchLower) || u.name.toLowerCase().includes(searchLower));
+  }).slice(0, 5);
   
   if(matches.length === 0) {
     suggestionsContainer.classList.remove('active');
@@ -893,14 +910,27 @@ function completeSignupFromFound() {
     return;
   }
   
-  // Update existing employee record
+  // Safety: block re-registration if profile already created
+  if(selectedSignupEmployee.password && String(selectedSignupEmployee.password).length > 0) {
+    showAlert('This profile is already registered. Please login or use Forgot Password.', 'error');
+    return;
+  }
+  
+  // Determine status based on Profile Approval setting
+  const needsApproval = (settings.requireApproval === true || settings.requireApproval === 'enabled');
+  const newStatus = needsApproval ? 'pending' : 'active';
+  
   db.ref('bus/users/' + selectedSignupEmployee.id).update({
     mobile: mobile,
     password: btoa(password),
-    status: 'active',
+    status: newStatus,
     accountActivatedAt: Date.now()
   }).then(() => {
-    showAlert('Account activated successfully! You can now login.', 'success');
+    if(needsApproval) {
+      showAlert('Registration submitted! Your account is pending admin approval.', 'success');
+    } else {
+      showAlert('Account activated successfully! You can now login.', 'success');
+    }
     resetSignupForm();
     showLogin();
   }).catch(err => {
@@ -946,20 +976,28 @@ function createManualAccount() {
     return;
   }
   
+  // Determine status based on Profile Approval setting
+  const needsApproval = (settings.requireApproval === true || settings.requireApproval === 'enabled');
+  const newStatus = needsApproval ? 'pending' : 'active';
+  
   const newUser = {
     employeeId: userId,
     name: name,
     department: dept,
     mobile: mobile,
     password: btoa(password),
-    status: 'active',
+    status: newStatus,
     accountType: accountType,
     bookingLimit: 1,
     createdAt: Date.now()
   };
   
   db.ref('bus/users').push(newUser).then(() => {
-    showAlert('Account created successfully! You can now login.', 'success');
+    if(needsApproval) {
+      showAlert('Account created! It is pending admin approval before you can login.', 'success');
+    } else {
+      showAlert('Account created successfully! You can now login.', 'success');
+    }
     resetSignupForm();
     showLogin();
   }).catch(err => {
@@ -1060,7 +1098,7 @@ function logoutAdmin() {
 function showAdminLogin() { 
   const password = prompt('Enter admin password:');
   console.log('⚙️ Admin login attempt');
-  if(password === 'Admin@2026') {
+  if(password === '872171') {
     isAdmin = true;
     currentUser = null;
     console.log('✅ Admin login successful');
@@ -1147,7 +1185,7 @@ function uploadEmployeeList(input) {
           return;
         }
         
-        // Create new employee (active by default)
+        // Create new employee (active by default since admin uploaded)
         const newEmployee = {
           employeeId: empId,
           name: name,
@@ -1554,6 +1592,7 @@ function renderUserManagement() {
     let statusClass = 'status-active';
     let statusText = u.status || 'active';
     if(u.status === 'inactive') statusClass = 'status-inactive';
+    if(u.status === 'pending') statusClass = 'status-pending';
     
     const bookingLimit = u.bookingLimit || 1;
     
@@ -1566,6 +1605,7 @@ function renderUserManagement() {
         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
         <td><input type="number" class="booking-limit-input" value="${bookingLimit}" min="1" onchange="updateBookingLimit('${u.id}', this.value)"></td>
         <td class="item-actions">
+          ${u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')">✅</button>` : ''}
           <button class="btn btn-outline btn-sm" onclick="editUser('${u.id}')">✏️</button>
           <button class="btn btn-warning btn-sm" onclick="toggleUserStatus('${u.id}')">${u.status === 'active' ? '🚫' : '✅'}</button>
           <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">🗑️</button>
@@ -1659,6 +1699,13 @@ function saveUser() {
       closeModal('user-modal');
     });
   }
+}
+
+function approveUser(userId) {
+  if(!confirm('Approve this employee?')) return;
+  db.ref('bus/users/' + userId).update({status: 'active'}).then(() => {
+    showAlert('Employee approved successfully!', 'success');
+  });
 }
 
 function toggleUserStatus(userId) {
@@ -1969,7 +2016,8 @@ function deleteMyBooking(bookingId) {
 function saveSettings() {
   const updates = {
     openTime: document.getElementById('setting-open-time').value,
-    closeTime: document.getElementById('setting-close-time').value
+    closeTime: document.getElementById('setting-close-time').value,
+    requireApproval: document.getElementById('setting-require-approval').value === 'enabled'
   };
   
   db.ref('bus/settings').set(updates).then(() => {
