@@ -237,7 +237,6 @@ tbody tr:nth-child(even){background:#f8fafc;}
 tbody tr:nth-child(even):hover{background:var(--brand-50);}
 .item-actions{display:flex;gap:8px;flex-wrap:wrap;}
 
-/* User Management Tabs */
 .user-tabs{display:flex;gap:12px;margin-bottom:24px;border-bottom:2px solid var(--border);}
 .user-tab{
   padding:12px 24px;background:transparent;border:none;cursor:pointer;
@@ -258,7 +257,6 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
   margin-left:8px;
 }
 
-/* ============ PREMIUM CALENDAR ============ */
 .calendar-header{
   display:flex;justify-content:space-between;align-items:center;
   margin-bottom:20px;gap:12px;
@@ -338,7 +336,6 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
   animation:scaleIn 0.5s cubic-bezier(0.16,1,0.3,1);
   box-shadow:var(--shadow-2xl);
 }
-@keyframes modalSlide{from{opacity:0;transform:scale(0.9);}to{opacity:1;transform:scale(1);}}
 .status-badge{
   padding:6px 14px;border-radius:20px;font-size:0.75rem;
   font-weight:700;display:inline-flex;align-items:center;gap:5px;
@@ -351,7 +348,6 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
 .status-active{background:var(--success-light);color:#065f46;border:2px solid #6ee7b7;}
 .status-inactive{background:var(--danger-light);color:#991b1b;border:2px solid #fca5a5;}
 
-/* ============ PREMIUM COASTER BUS SEAT LAYOUT ============ */
 .seat-selection-container{
   background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);
   padding:40px;border-radius:var(--radius-lg);margin:28px 0;
@@ -459,7 +455,6 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
 .passenger-notice strong{color:#1e40af;}
 .passenger-notice small{color:#1e40af;display:block;margin-top:5px;}
 
-/* Stats Cards */
 .stat-card{
   background:var(--gradient-brand);color:#fff;padding:28px;border-radius:var(--radius-md);
   text-align:center;box-shadow:0 8px 24px -8px rgba(15,118,110,0.4);
@@ -481,7 +476,6 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
   position:relative;z-index:1;
 }
 
-/* ============ RESPONSIVE ============ */
 @media(max-width:1024px){
   .container{padding:0 20px;}
   .card{padding:28px;}
@@ -852,6 +846,10 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
           <div class="form-group"><label>Select Date</label><input type="date" id="trip-date"></div>
           <div class="form-group"><label>Departure Time</label><input type="time" id="trip-time" value="10:00"></div>
+          <div class="form-group"><label>Bus Number</label><input type="text" id="trip-bus-number" placeholder="e.g., BUS-101"></div>
+          <div class="form-group"><label>Route</label><input type="text" id="trip-route" placeholder="e.g., Hotel to City Center"></div>
+          <div class="form-group"><label>Pickup Point</label><input type="text" id="trip-pickup" placeholder="e.g., Main Entrance"></div>
+          <div class="form-group"><label>Drop-off Point</label><input type="text" id="trip-dropoff" placeholder="e.g., Central Station"></div>
         </div>
         <button class="btn btn-primary" onclick="addTrip()">➕ Add Trip</button>
       </div>
@@ -903,6 +901,13 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
         <small style="color:var(--text-muted);display:block;margin-top:6px;">When enabled, newly created employee profiles stay "pending" until an admin approves them in User Management.</small>
       </div>
       <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+    </div>
+    <div class="card">
+      <h2>🚌 Bus Ticket Customization</h2>
+      <p style="color:var(--text-muted);margin-bottom:18px;">Customize the appearance and text of bus tickets.</p>
+      <div class="form-group"><label>Bus Operator Name</label><input type="text" id="setting-bus-operator" placeholder="e.g., Hotel Transport Services"></div>
+      <div class="form-group"><label>Ticket Terms & Conditions</label><textarea id="setting-ticket-terms" rows="3" placeholder="e.g., Please arrive 15 minutes before departure. Present this ticket to the driver."></textarea></div>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Ticket Settings</button>
     </div>
   </div>
 
@@ -1041,7 +1046,7 @@ let currentMonth = new Date();
 let bookings = [];
 let trips = [];
 let users = [];
-let settings = {openTime: '10:00', closeTime: '18:30', requireApproval: false};
+let settings = {openTime: '10:00', closeTime: '18:30', requireApproval: false, busOperator: '', ticketTerms: ''};
 let seatAvailability = {};
 let currentTicketData = null;
 let selectedDateForBooking = null;
@@ -1123,6 +1128,8 @@ function loadAllData() {
       if(document.getElementById('setting-open-time')) document.getElementById('setting-open-time').value = s.openTime || '10:00';
       if(document.getElementById('setting-close-time')) document.getElementById('setting-close-time').value = s.closeTime || '18:30';
       if(document.getElementById('setting-require-approval')) document.getElementById('setting-require-approval').value = (settings.requireApproval ? 'enabled' : 'disabled');
+      if(document.getElementById('setting-bus-operator')) document.getElementById('setting-bus-operator').value = s.busOperator || '';
+      if(document.getElementById('setting-ticket-terms')) document.getElementById('setting-ticket-terms').value = s.ticketTerms || 'Please arrive 15 minutes before departure. Present this ticket to the driver.';
     }
   });
   db.ref('bus/seatAvailability').on('value', snap => { seatAvailability = snap.val() || {}; });
@@ -1759,11 +1766,27 @@ function updateDashboardStats() {
 function addTrip() {
   const date = document.getElementById('trip-date').value;
   const time = document.getElementById('trip-time').value;
+  const busNumber = document.getElementById('trip-bus-number').value.trim();
+  const route = document.getElementById('trip-route').value.trim();
+  const pickup = document.getElementById('trip-pickup').value.trim();
+  const dropoff = document.getElementById('trip-dropoff').value.trim();
   if(!date || !time) { showAlert('Please select date and time', 'error'); return; }
   if(trips.find(t => t.date === date)) { showAlert('Trip already exists for this date', 'error'); return; }
-  db.ref('bus/trips').push({ date: date, time: time, createdAt: Date.now() }).then(() => {
+  db.ref('bus/trips').push({ 
+    date: date, 
+    time: time, 
+    busNumber: busNumber,
+    route: route,
+    pickup: pickup,
+    dropoff: dropoff,
+    createdAt: Date.now() 
+  }).then(() => {
     showAlert('Trip added successfully for ' + formatDateDisplay(date) + '!', 'success');
     document.getElementById('trip-date').value = '';
+    document.getElementById('trip-bus-number').value = '';
+    document.getElementById('trip-route').value = '';
+    document.getElementById('trip-pickup').value = '';
+    document.getElementById('trip-dropoff').value = '';
   }).catch(err => showAlert('Error: ' + err.message, 'error'));
 }
 
@@ -1775,8 +1798,10 @@ function renderAdminTrips() {
     return `
       <div class="trip-item">
         <div>
-          <strong style="color:var(--brand);font-size:1.1rem;">${formatDateDisplay(t.date)}</strong>
-          <div style="color:var(--text-muted);font-size:0.9rem;margin-top:5px;">Departure: ${t.time} • ${count}/22 seats booked</div>
+          <strong style="color:var(--brand);font-size:1.1rem;">${formatDateDisplay(t.date)} ${t.time ? 'at ' + t.time : ''}</strong>
+          ${t.busNumber ? `<div style="color:var(--text);font-size:0.9rem;margin-top:4px;">🚌 ${t.busNumber}</div>` : ''}
+          ${t.route ? `<div style="color:var(--text-muted);font-size:0.9rem;">📍 ${t.route}</div>` : ''}
+          <div style="color:var(--text-muted);font-size:0.85rem;margin-top:5px;">${count}/22 seats booked</div>
         </div>
         <button class="btn btn-danger btn-sm" onclick="deleteTrip('${t.id}')">🗑️ Delete</button>
       </div>
@@ -2045,20 +2070,35 @@ function viewTicket(bookingId) {
   const booking = bookings.find(b => b.id === bookingId);
   if(!booking) return showAlert('Booking not found', 'error');
   currentTicketData = booking;
+  const trip = trips.find(t => t.date === booking.tripDate) || {};
   const isCancelled = booking.status === 'cancelled';
   const isAdditional = booking.relation && booking.relation !== 'Self';
+  const busOperator = settings.busOperator || 'Hotel Transport Services';
+  const ticketTerms = settings.ticketTerms || 'Please arrive 15 minutes before departure. Present this ticket to the driver.';
+
   const html = `
     <div style="border:3px dashed var(--brand);border-radius:var(--radius-lg);padding:32px;margin:24px 0;background:#fff;">
       <div style="text-align:center;padding-bottom:20px;border-bottom:2px solid var(--border);margin-bottom:28px;">
         <h2 style="color:var(--brand);margin:0;">${document.getElementById('app-hotel-name').innerText}</h2>
         <p style="color:var(--text-muted);">Bus Ticket - Umluj Shopping Trip</p>
+        ${busOperator ? `<p style="color:var(--brand);font-size:0.9rem;margin-top:5px;">Operated by: ${busOperator}</p>` : ''}
         <div style="margin-top:12px;"><span class="status-badge status-${booking.status}">${booking.status.toUpperCase()}</span></div>
       </div>
+      ${trip.route ? `
+      <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:20px;text-align:center;">
+        <div style="font-size:1.2rem;font-weight:800;color:var(--brand-dark);display:flex;align-items:center;justify-content:center;gap:12px;">
+          <span>${trip.pickup || 'Pickup'}</span>
+          <span style="color:var(--gold);">→</span>
+          <span>${trip.dropoff || 'Drop-off'}</span>
+        </div>
+        <div style="color:var(--text-muted);font-size:0.9rem;margin-top:6px;">Route: ${trip.route}</div>
+      </div>
+      ` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;">
         <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Passenger Name</label><div style="font-weight:700;margin-top:5px;">${booking.name}</div></div>
         <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Relation</label><div style="font-weight:700;margin-top:5px;">${booking.relation || 'Self'}</div></div>
         ${isAdditional ? `
-        <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Booked By (Employee)</label><div style="font-weight:700;margin-top:5px;">${booking.bookedByEmployeeName || booking.name}</div></div>
+        <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Booked By</label><div style="font-weight:700;margin-top:5px;">${booking.bookedByEmployeeName || booking.name}</div></div>
         <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Employee ID</label><div style="font-weight:700;margin-top:5px;">${booking.employeeId}</div></div>
         ` : `
         <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Employee ID</label><div style="font-weight:700;margin-top:5px;">${booking.employeeId}</div></div>
@@ -2067,8 +2107,12 @@ function viewTicket(bookingId) {
         <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Mobile</label><div style="font-weight:700;margin-top:5px;">${booking.mobile}</div></div>
         <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Travel Date</label><div style="font-weight:700;margin-top:5px;">${formatDateDisplay(booking.tripDate)}</div></div>
         <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Departure Time</label><div style="font-weight:700;margin-top:5px;">${booking.tripTime || '10:00'}</div></div>
+        ${trip.busNumber ? `<div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Bus Number</label><div style="font-weight:700;margin-top:5px;">${trip.busNumber}</div></div>` : ''}
         <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Seat Number</label><div style="font-weight:700;margin-top:5px;">${booking.seatNumber}</div></div>
-        <div style="background:var(--brand-50);padding:16px;border-radius:var(--radius);border:1px solid var(--border);"><label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Booking Time</label><div style="font-weight:700;margin-top:5px;font-size:0.875rem;">${new Date(booking.bookedAt).toLocaleString()}</div></div>
+      </div>
+      <div style="background:var(--warning-light);padding:16px;border-radius:var(--radius);border:1px solid #fde68a;margin-bottom:20px;">
+        <label style="font-size:0.75rem;color:#92400e;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Terms & Conditions</label>
+        <div style="font-weight:500;margin-top:5px;color:#78350f;font-size:0.9rem;">${ticketTerms}</div>
       </div>
       ${!isCancelled ? `<div style="text-align:center;padding:28px;background:#f8fafc;border-radius:var(--radius);border:1px solid var(--border);"><div id="qrcode-container"></div><p style="margin-top:14px;color:var(--text-muted);font-size:0.875rem;">Scan QR code for verification</p></div>` : '<p style="text-align:center;color:var(--danger);font-weight:700;padding:28px;">❌ This ticket is no longer valid</p>'}
     </div>
@@ -2103,17 +2147,40 @@ function downloadTicketPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const b = currentTicketData;
+    const trip = trips.find(t => t.date === b.tripDate) || {};
     const isAdditional = b.relation && b.relation !== 'Self';
+    const busOperator = settings.busOperator || 'Hotel Transport Services';
+    const ticketTerms = settings.ticketTerms || 'Please arrive 15 minutes before departure. Present this ticket to the driver.';
+
     doc.setFillColor(15, 118, 110);
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 45, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
-    doc.text(document.getElementById('app-hotel-name').innerText, 105, 20, {align: 'center'});
+    doc.text(document.getElementById('app-hotel-name').innerText, 105, 18, {align: 'center'});
     doc.setFontSize(12);
-    doc.text('Bus Ticket - Umluj Shopping Trip', 105, 30, {align: 'center'});
+    doc.text('Bus Ticket - Umluj Shopping Trip', 105, 28, {align: 'center'});
+    if(busOperator) {
+      doc.setFontSize(10);
+      doc.text('Operated by: ' + busOperator, 105, 36, {align: 'center'});
+    }
+    
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
     let y = 60;
+
+    if(trip.route) {
+      doc.setFillColor(240, 253, 250);
+      doc.rect(15, y, 180, 20, 'F');
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(15, 118, 110);
+      doc.text((trip.pickup || 'Pickup') + '  →  ' + (trip.dropoff || 'Drop-off'), 105, y + 8, {align: 'center'});
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      doc.text('Route: ' + trip.route, 105, y + 15, {align: 'center'});
+      y += 30;
+      doc.setFontSize(11);
+    }
+
     const details = [
       ['Passenger Name:', b.name],
       ['Relation:', b.relation || 'Self'],
@@ -2121,32 +2188,51 @@ function downloadTicketPDF() {
       ['Department:', b.department],
       ['Mobile:', b.mobile],
       ['Travel Date:', formatDateDisplay(b.tripDate)],
-      ['Departure Time:', b.tripTime || '10:00'],
-      ['Seat Number:', b.seatNumber.toString()],
-      ['Booking Time:', new Date(b.bookedAt).toLocaleString()],
-      ['Status:', b.status.toUpperCase()]
+      ['Departure Time:', b.tripTime || '10:00']
     ];
+    if(trip.busNumber) details.push(['Bus Number:', trip.busNumber]);
+    details.push(['Seat Number:', b.seatNumber.toString()]);
+    details.push(['Booking Time:', new Date(b.bookedAt).toLocaleString()]);
+    details.push(['Status:', b.status.toUpperCase()]);
+
     if(isAdditional) details.splice(2, 0, ['Booked By:', b.bookedByEmployeeName || b.name]);
+
     details.forEach(([label, value]) => {
       doc.setFont(undefined, 'bold');
+      doc.setTextColor(15, 118, 110);
       doc.text(label, 20, y);
       doc.setFont(undefined, 'normal');
+      doc.setTextColor(0, 0, 0);
       doc.text(String(value), 80, y);
       y += 10;
     });
+
+    y += 5;
+    doc.setDrawColor(245, 158, 11);
+    doc.setLineWidth(0.5);
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    const splitTerms = doc.splitTextToSize('Terms: ' + ticketTerms, 170);
+    doc.text(splitTerms, 105, y, {align: 'center'});
+    y += splitTerms.length * 5 + 10;
+
     const qrContainer = document.getElementById('qrcode-container');
     if(qrContainer) {
       const canvas = qrContainer.querySelector('canvas');
       if(canvas) {
         const qrImgData = canvas.toDataURL('image/png');
-        doc.addImage(qrImgData, 'PNG', 75, y + 10, 60, 60);
-        y += 80;
+        doc.addImage(qrImgData, 'PNG', 75, y, 60, 60);
+        y += 70;
       }
     }
+    
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text('Please arrive 15 minutes before departure time', 105, 270, {align: 'center'});
-    doc.text('Present this ticket to the driver for verification', 105, 277, {align: 'center'});
+    doc.text('Please arrive 15 minutes before departure time', 105, 280, {align: 'center'});
+    
     doc.save(`Ticket_${b.employeeId}_${b.tripDate}.pdf`);
     showAlert('Ticket downloaded successfully!', 'success');
   } catch(err) {
@@ -2202,7 +2288,9 @@ function saveSettings() {
   const updates = {
     openTime: document.getElementById('setting-open-time').value,
     closeTime: document.getElementById('setting-close-time').value,
-    requireApproval: document.getElementById('setting-require-approval').value === 'enabled'
+    requireApproval: document.getElementById('setting-require-approval').value === 'enabled',
+    busOperator: document.getElementById('setting-bus-operator') ? document.getElementById('setting-bus-operator').value.trim() : '',
+    ticketTerms: document.getElementById('setting-ticket-terms') ? document.getElementById('setting-ticket-terms').value.trim() : ''
   };
   db.ref('bus/settings').set(updates).then(() => {
     showAlert('Settings saved', 'success');
