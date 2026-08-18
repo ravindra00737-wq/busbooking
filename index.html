@@ -902,13 +902,6 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
       </div>
       <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
     </div>
-    <div class="card">
-      <h2>🚌 Bus Ticket Customization</h2>
-      <p style="color:var(--text-muted);margin-bottom:18px;">Customize the appearance and text of bus tickets.</p>
-      <div class="form-group"><label>Bus Operator Name</label><input type="text" id="setting-bus-operator" placeholder="e.g., Hotel Transport Services"></div>
-      <div class="form-group"><label>Ticket Terms & Conditions</label><textarea id="setting-ticket-terms" rows="3" placeholder="e.g., Please arrive 15 minutes before departure. Present this ticket to the driver."></textarea></div>
-      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Ticket Settings</button>
-    </div>
   </div>
 
   <div id="tab-admin-branding" class="tab-content">
@@ -936,6 +929,13 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
       </div>
       <div class="form-group"><label>Primary Color</label><input type="color" id="brand-color" value="#0f766e" style="width:110px;height:48px;border-radius:var(--radius);border:2px solid var(--border);"></div>
       <button class="btn btn-primary btn-full" onclick="saveBranding()">💾 Save Branding</button>
+    </div>
+    <div class="card">
+      <h2>🚌 Bus Ticket Customization</h2>
+      <p style="color:var(--text-muted);margin-bottom:18px;">Customize the appearance and text of bus tickets.</p>
+      <div class="form-group"><label>Bus Operator Name</label><input type="text" id="brand-bus-operator" placeholder="e.g., Hotel Transport Services"></div>
+      <div class="form-group"><label>Ticket Terms & Conditions</label><textarea id="brand-ticket-terms" rows="3" placeholder="e.g., Please arrive 15 minutes before departure. Present this ticket to the driver."></textarea></div>
+      <button class="btn btn-primary btn-full" onclick="saveBranding()">💾 Save Ticket Settings</button>
     </div>
   </div>
 </div>
@@ -1128,8 +1128,6 @@ function loadAllData() {
       if(document.getElementById('setting-open-time')) document.getElementById('setting-open-time').value = s.openTime || '10:00';
       if(document.getElementById('setting-close-time')) document.getElementById('setting-close-time').value = s.closeTime || '18:30';
       if(document.getElementById('setting-require-approval')) document.getElementById('setting-require-approval').value = (settings.requireApproval ? 'enabled' : 'disabled');
-      if(document.getElementById('setting-bus-operator')) document.getElementById('setting-bus-operator').value = s.busOperator || '';
-      if(document.getElementById('setting-ticket-terms')) document.getElementById('setting-ticket-terms').value = s.ticketTerms || 'Please arrive 15 minutes before departure. Present this ticket to the driver.';
     }
   });
   db.ref('bus/seatAvailability').on('value', snap => { seatAvailability = snap.val() || {}; });
@@ -1163,6 +1161,15 @@ function loadAllData() {
     if(d.color) {
       document.documentElement.style.setProperty('--brand', d.color);
       if(document.getElementById('brand-color')) document.getElementById('brand-color').value = d.color;
+    }
+    // Load ticket customization from branding
+    if(d.busOperator) {
+      if(document.getElementById('brand-bus-operator')) document.getElementById('brand-bus-operator').value = d.busOperator;
+      settings.busOperator = d.busOperator;
+    }
+    if(d.ticketTerms) {
+      if(document.getElementById('brand-ticket-terms')) document.getElementById('brand-ticket-terms').value = d.ticketTerms;
+      settings.ticketTerms = d.ticketTerms;
     }
   });
 }
@@ -1474,11 +1481,22 @@ function saveBranding() {
     tagline: document.getElementById('brand-tagline').value.trim(),
     color: document.getElementById('brand-color').value
   };
+  
+  // Add ticket customization fields if they exist
+  const busOperatorInput = document.getElementById('brand-bus-operator');
+  const ticketTermsInput = document.getElementById('brand-ticket-terms');
+  if(busOperatorInput) brandingData.busOperator = busOperatorInput.value.trim();
+  if(ticketTermsInput) brandingData.ticketTerms = ticketTermsInput.value.trim();
+  
   if(tempLogo) brandingData.logo = tempLogo;
   if(tempBg) brandingData.background = tempBg;
+  
   db.ref('bus/branding').set(brandingData).then(() => {
-    showAlert('Branding saved successfully!', 'success');
+    showAlert('Branding and Ticket settings saved successfully!', 'success');
     tempLogo = null; tempBg = null;
+    // Update local settings immediately
+    if(brandingData.busOperator !== undefined) settings.busOperator = brandingData.busOperator;
+    if(brandingData.ticketTerms !== undefined) settings.ticketTerms = brandingData.ticketTerms;
   }).catch(err => showAlert('Error: ' + err.message, 'error'));
 }
 
@@ -2288,9 +2306,7 @@ function saveSettings() {
   const updates = {
     openTime: document.getElementById('setting-open-time').value,
     closeTime: document.getElementById('setting-close-time').value,
-    requireApproval: document.getElementById('setting-require-approval').value === 'enabled',
-    busOperator: document.getElementById('setting-bus-operator') ? document.getElementById('setting-bus-operator').value.trim() : '',
-    ticketTerms: document.getElementById('setting-ticket-terms') ? document.getElementById('setting-ticket-terms').value.trim() : ''
+    requireApproval: document.getElementById('setting-require-approval').value === 'enabled'
   };
   db.ref('bus/settings').set(updates).then(() => {
     showAlert('Settings saved', 'success');
