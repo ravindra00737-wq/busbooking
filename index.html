@@ -764,7 +764,18 @@ tbody tr:nth-child(even):hover{background:var(--brand-50);}
   <div id="tab-bookings" class="tab-content">
     <div class="card">
       <h2>🎫 My Bookings</h2>
-      <div id="my-bookings-list"></div>
+      <div id="latest-booking-container"></div>
+      
+      <div style="margin-top: 32px; border-top: 2px solid var(--border); padding-top: 24px;">
+        <h3 style="margin-bottom: 16px;">📅 Previous Bookings</h3>
+        <div class="form-group" style="max-width: 300px;">
+          <label>Filter by Month & Year</label>
+          <select id="previous-bookings-filter" onchange="renderPreviousBookings()">
+            <option value="">Select Month & Year</option>
+          </select>
+        </div>
+        <div id="previous-bookings-list"></div>
+      </div>
     </div>
   </div>
 
@@ -2261,35 +2272,94 @@ function downloadTicketPDF() {
 
 function renderMyBookings() {
   if(!currentUser) return;
-  const myBookings = bookings.filter(b => b.userId === currentUser.id);
-  const container = document.getElementById('my-bookings-list');
+  let myBookings = bookings.filter(b => b.userId === currentUser.id);
+  
+  // Sort by bookedAt descending
+  myBookings.sort((a, b) => b.bookedAt - a.bookedAt);
+  
+  const latestContainer = document.getElementById('latest-booking-container');
+  const previousContainer = document.getElementById('previous-bookings-list');
+  const filterSelect = document.getElementById('previous-bookings-filter');
+  
   if(myBookings.length === 0) {
-    container.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted);">No bookings yet.</p>';
+    latestContainer.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted);">No bookings yet.</p>';
+    previousContainer.innerHTML = '';
+    filterSelect.innerHTML = '<option value="">Select Month & Year</option>';
     return;
   }
-  container.innerHTML = myBookings.map(b => {
-    const statusClass = `status-${b.status}`;
-    const canDownload = b.status === 'booked' || b.status === 'boarded';
-    const canCancel = b.status === 'booked';
-    return `
-      <div class="booking-card">
-        <h3>🎫 Booking #${b.id ? b.id.slice(-6).toUpperCase() : '---'} <span class="status-badge ${statusClass}">${b.status}</span></h3>
-        <div class="booking-details">
-          <div class="booking-detail"><label>Passenger</label><strong>${b.name}</strong></div>
-          <div class="booking-detail"><label>Relation</label><strong>${b.relation || 'Self'}</strong></div>
-          <div class="booking-detail"><label>Travel Date</label><strong>${formatDateDisplay(b.tripDate)}</strong></div>
-          <div class="booking-detail"><label>Departure Time</label><strong>${b.tripTime || '10:00'}</strong></div>
-          <div class="booking-detail"><label>Seat Number</label><strong>${b.seatNumber || 'N/A'}</strong></div>
-          <div class="booking-detail"><label>Booking Time</label><strong style="font-size:0.875rem;">${new Date(b.bookedAt).toLocaleString()}</strong></div>
-        </div>
-        <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;">
-          ${canDownload ? `<button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">👁️ View/Download Ticket</button>` : ''}
-          ${canCancel ? `<button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.id}')">❌ Cancel</button>` : ''}
-          <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">🗑️ Delete</button>
-        </div>
+  
+  // Latest booking is the first one
+  const latestBooking = myBookings[0];
+  latestContainer.innerHTML = renderBookingCard(latestBooking, true);
+  
+  // Populate dropdown with unique month-years from ALL bookings
+  const sortedMonthYears = [...new Set(myBookings.map(b => {
+    const d = new Date(b.bookedAt);
+    return {
+      label: `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`,
+      sortKey: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    };
+  }))].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+  
+  filterSelect.innerHTML = '<option value="">Select Month & Year</option>' + 
+    sortedMonthYears.map(my => `<option value="${my.sortKey}">${my.label}</option>`).join('');
+    
+  // Clear previous bookings initially
+  previousContainer.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-muted);">Select a month and year to view previous bookings.</p>';
+}
+
+function renderPreviousBookings() {
+  if(!currentUser) return;
+  const filterValue = document.getElementById('previous-bookings-filter').value;
+  const previousContainer = document.getElementById('previous-bookings-list');
+  
+  if(!filterValue) {
+    previousContainer.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-muted);">Select a month and year to view previous bookings.</p>';
+    return;
+  }
+  
+  let myBookings = bookings.filter(b => b.userId === currentUser.id);
+  // Sort by bookedAt descending
+  myBookings.sort((a, b) => b.bookedAt - a.bookedAt);
+  
+  // Filter by selected month-year
+  const filteredBookings = myBookings.filter(b => {
+    const d = new Date(b.bookedAt);
+    const sortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return sortKey === filterValue;
+  });
+  
+  if(filteredBookings.length === 0) {
+    previousContainer.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-muted);">No bookings found for this period.</p>';
+  } else {
+    previousContainer.innerHTML = filteredBookings.map(b => renderBookingCard(b, false)).join('');
+  }
+}
+
+function renderBookingCard(b, isLatest) {
+  const statusClass = `status-${b.status}`;
+  const canDownload = b.status === 'booked' || b.status === 'boarded';
+  const canCancel = b.status === 'booked';
+  const title = isLatest ? '🌟 Latest Booking' : '🎫 Booking';
+  
+  return `
+    <div class="booking-card" style="${isLatest ? 'border-left-color: var(--success); background: var(--brand-50);' : ''}">
+      <h3>${title} #${b.id ? b.id.slice(-6).toUpperCase() : '---'} <span class="status-badge ${statusClass}">${b.status}</span></h3>
+      <div class="booking-details">
+        <div class="booking-detail"><label>Passenger</label><strong>${b.name}</strong></div>
+        <div class="booking-detail"><label>Relation</label><strong>${b.relation || 'Self'}</strong></div>
+        <div class="booking-detail"><label>Travel Date</label><strong>${formatDateDisplay(b.tripDate)}</strong></div>
+        <div class="booking-detail"><label>Departure Time</label><strong>${b.tripTime || '10:00'}</strong></div>
+        <div class="booking-detail"><label>Seat Number</label><strong>${b.seatNumber || 'N/A'}</strong></div>
+        <div class="booking-detail"><label>Booking Time</label><strong style="font-size:0.875rem;">${new Date(b.bookedAt).toLocaleString()}</strong></div>
       </div>
-    `;
-  }).join('');
+      <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;">
+        ${canDownload ? `<button class="btn btn-outline btn-sm" onclick="viewTicket('${b.id}')">👁️ View/Download Ticket</button>` : ''}
+        ${canCancel ? `<button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.id}')">❌ Cancel</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteMyBooking('${b.id}')">🗑️ Delete</button>
+      </div>
+    </div>
+  `;
 }
 
 function cancelMyBooking(bookingId) {
